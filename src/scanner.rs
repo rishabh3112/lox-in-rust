@@ -48,7 +48,7 @@ impl<'a> Scanner<'a> {
                 '*' => return TokenType::STAR,
                 '\n' => self.line += 1,
                 _ => {
-                    println!("[line {}] Error: Unexpected character: {}", self.line, char);
+                    eprintln!("[line {}] Error: Unexpected character: {}", self.line, char);
                 }
             }
         }
