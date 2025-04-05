@@ -1,5 +1,5 @@
 use crate::token::{Token, TokenType};
-use std::str::Chars;
+use std::{error, str::Chars};
 
 pub struct Scanner<'a> {
     source: &'a String,
@@ -57,6 +57,7 @@ impl<'a> Scanner<'a> {
                 '\n' => self.line += 1,
                 _ => {
                     eprintln!("[line {}] Error: Unexpected character: {}", self.line, char);
+                    self.errors = true;
                 }
             }
         }
