@@ -12,7 +12,7 @@ impl<'a> Scanner<'a> {
         Self {
             source,
             chars: source.chars(),
-            line: 0,
+            line: 1,
         }
     }
 
