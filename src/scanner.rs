@@ -37,6 +37,13 @@ impl<'a> Scanner<'a> {
                 ')' => return TokenType::RIGHT_PAREN,
                 '{' => return TokenType::LEFT_BRACE,
                 '}' => return TokenType::RIGHT_BRACE,
+                '-' => return TokenType::MINUS,
+                '+' => return TokenType::PLUS,
+                ',' => return TokenType::COMMA,
+                '.' => return TokenType::DOT,
+                ';' => return TokenType::SEMICOLON,
+                '/' => return TokenType::COMMA,
+                '*' => return TokenType::STAR,
                 _ => {}
             }
         }
