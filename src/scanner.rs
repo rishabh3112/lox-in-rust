@@ -35,9 +35,12 @@ impl<'a> Scanner<'a> {
             match char {
                 '(' => return TokenType::LEFT_PAREN,
                 ')' => return TokenType::RIGHT_PAREN,
+                '{' => return TokenType::LEFT_BRACE,
+                '}' => return TokenType::RIGHT_BRACE,
                 _ => {}
             }
         }
+
         return TokenType::EOF;
     }
 
