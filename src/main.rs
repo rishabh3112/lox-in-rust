@@ -4,6 +4,7 @@ mod token;
 use std::env;
 use std::fs;
 use std::io::{self, Write};
+use std::process::exit;
 
 use scanner::Scanner;
 
@@ -25,9 +26,22 @@ fn main() {
             });
 
             let mut scanner = Scanner::new(&file_contents);
-            let tokens = scanner.scan_tokens();
+            let tokens;
+            let mut error = false;
+            match scanner.scan_tokens() {
+                Ok(t) => tokens = t,
+                Err(t) => {
+                    tokens = t;
+                    error = true
+                }
+            }
+
             for token in tokens {
                 println!("{}", token)
+            }
+
+            if error {
+                exit(65)
             }
         }
         _ => {

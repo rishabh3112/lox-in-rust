@@ -5,6 +5,7 @@ pub struct Scanner<'a> {
     source: &'a String,
     chars: Chars<'a>,
     line: usize,
+    errors: bool,
 }
 
 impl<'a> Scanner<'a> {
@@ -13,23 +14,30 @@ impl<'a> Scanner<'a> {
             source,
             chars: source.chars(),
             line: 1,
+            errors: false,
         }
     }
 
-    pub fn scan_tokens(self: &mut Self) -> Vec<Token> {
+    pub fn scan_tokens(self: &mut Self) -> Result<Vec<Token>, Vec<Token>> {
         let mut tokens: Vec<Token> = vec![];
         loop {
             let start = self.offset();
             let ty = self.read_next_token();
+
             if ty == TokenType::EOF {
                 tokens.push(Token::new(ty, None));
                 break;
             }
+
             let lexeme = self.source[start..self.offset()].to_string();
             tokens.push(Token::new(ty, Some(lexeme)));
         }
 
-        tokens
+        if self.errors {
+            Err(tokens)
+        } else {
+            Ok(tokens)
+        }
     }
 
     fn read_next_token(self: &mut Self) -> TokenType {
