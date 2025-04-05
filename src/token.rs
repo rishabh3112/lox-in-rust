@@ -3,7 +3,15 @@ use std::fmt::{self, Display, Formatter};
 pub struct Token {
     pub ty: TokenType,
     pub lexeme: String,
-    pub line: u32,
+}
+
+impl Token {
+    pub fn new(ty: TokenType, lexeme: Option<String>) -> Self {
+        Self {
+            ty,
+            lexeme: lexeme.unwrap_or(String::new()),
+        }
+    }
 }
 
 impl Display for Token {
@@ -18,6 +26,7 @@ impl Display for Token {
     }
 }
 
+#[derive(PartialEq)]
 pub enum TokenType {
     // Single-character tokens.
     LEFT_PAREN,

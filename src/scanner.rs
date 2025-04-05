@@ -4,49 +4,45 @@ use std::str::Chars;
 pub struct Scanner<'a> {
     source: &'a String,
     chars: Chars<'a>,
-    tokens: Vec<Token>,
-    current: usize,
-    size: usize,
 }
 
 impl<'a> Scanner<'a> {
     pub fn new(source: &'a String) -> Self {
-        let size = source.len();
-        //        let graphemes = source
-        //            .graphemes(true)
-        //            .map(|s| s.to_string())
-        //            .collect::<Vec<String>>();
         Self {
             source,
             chars: source.chars(),
-            tokens: vec![],
-            current: 0,
-            size,
         }
     }
 
-    pub fn scan_tokens(self: &mut Self) -> &Vec<Token> {
+    pub fn scan_tokens(self: &mut Self) -> Vec<Token> {
+        let mut tokens: Vec<Token> = vec![];
+        while true {
+            let start = self.offset();
+            let ty = self.read_next_token();
+            if ty == TokenType::EOF {
+                tokens.push(Token::new(ty, None));
+                break;
+            }
+            let lexeme = self.source[start..self.offset()].to_string();
+            tokens.push(Token::new(ty, Some(lexeme)));
+        }
+
+        tokens
+    }
+
+    fn read_next_token(self: &mut Self) -> TokenType {
         while let Some(char) = self.chars.next() {
             match char {
-                '(' => self.add_token(TokenType::LEFT_PAREN),
-                ')' => self.add_token(TokenType::RIGHT_PAREN),
+                '(' => return TokenType::LEFT_PAREN,
+                ')' => return TokenType::RIGHT_PAREN,
                 _ => {}
             }
         }
-        self.tokens.push(Token {
-            ty: TokenType::EOF,
-            lexeme: String::new(),
-            line: 0,
-        });
-
-        &self.tokens
+        return TokenType::EOF;
     }
 
-    pub fn add_token(self: &mut Self, ty: TokenType) {
-        self.tokens.push(Token {
-            ty,
-            lexeme: String::new(),
-            line: 0,
-        });
+    // helpers
+    fn offset(&mut self) -> usize {
+        return self.source.len() - self.chars.as_str().len();
     }
 }
