@@ -4,6 +4,7 @@ use std::str::Chars;
 pub struct Scanner<'a> {
     source: &'a String,
     chars: Chars<'a>,
+    line: usize,
 }
 
 impl<'a> Scanner<'a> {
@@ -11,12 +12,13 @@ impl<'a> Scanner<'a> {
         Self {
             source,
             chars: source.chars(),
+            line: 0,
         }
     }
 
     pub fn scan_tokens(self: &mut Self) -> Vec<Token> {
         let mut tokens: Vec<Token> = vec![];
-        while true {
+        loop {
             let start = self.offset();
             let ty = self.read_next_token();
             if ty == TokenType::EOF {
@@ -44,7 +46,10 @@ impl<'a> Scanner<'a> {
                 ';' => return TokenType::SEMICOLON,
                 '/' => return TokenType::COMMA,
                 '*' => return TokenType::STAR,
-                _ => {}
+                '\n' => self.line += 1,
+                _ => {
+                    println!("[line {}] Error: Unexpected character: {}", self.line, char);
+                }
             }
         }
 
