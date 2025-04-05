@@ -6,6 +6,7 @@ pub struct Scanner<'a> {
     chars: Chars<'a>,
     line: usize,
     errors: bool,
+    start: usize,
 }
 
 impl<'a> Scanner<'a> {
@@ -15,13 +16,14 @@ impl<'a> Scanner<'a> {
             chars: source.chars(),
             line: 1,
             errors: false,
+            start: 0,
         }
     }
 
     pub fn scan_tokens(self: &mut Self) -> Result<Vec<Token>, Vec<Token>> {
         let mut tokens: Vec<Token> = vec![];
         loop {
-            let start = self.offset();
+            self.start = self.offset();
             let ty = self.read_next_token();
 
             if ty == TokenType::EOF {
@@ -29,7 +31,7 @@ impl<'a> Scanner<'a> {
                 break;
             }
 
-            let lexeme = self.source[start..self.offset()].to_string();
+            let lexeme = self.source[self.start..self.offset()].to_string();
             tokens.push(Token::new(ty, Some(lexeme)));
         }
 
@@ -54,8 +56,12 @@ impl<'a> Scanner<'a> {
                 ';' => return TokenType::SEMICOLON,
                 '/' => return TokenType::COMMA,
                 '*' => return TokenType::STAR,
-                '\n' => self.line += 1,
+                '\n' => {
+                    self.line += 1;
+                    self.start += 1;
+                }
                 _ => {
+                    self.start += 1;
                     eprintln!("[line {}] Error: Unexpected character: {}", self.line, char);
                     self.errors = true;
                 }
