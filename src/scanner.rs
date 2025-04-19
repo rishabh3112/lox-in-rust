@@ -60,7 +60,6 @@ impl<'a> Scanner<'a> {
                 ',' => return TokenType::COMMA,
                 '.' => return TokenType::DOT,
                 ';' => return TokenType::SEMICOLON,
-                '/' => return TokenType::COMMA,
                 '*' => return TokenType::STAR,
                 '!' => {
                     if self.match_next('=') {
@@ -85,6 +84,19 @@ impl<'a> Scanner<'a> {
                         return TokenType::LESS_EQUAL;
                     };
                     return TokenType::LESS;
+                }
+                '/' => {
+                    if self.match_next('/') {
+                        while let Some(next) = self.peek() {
+                            self.chars.next();
+                            if next == '\n' {
+                                self.start = self.offset();
+                                break;
+                            }
+                        }
+                    } else {
+                        return TokenType::SLASH;
+                    }
                 }
                 ' ' | '\t' => {}
                 '\n' => {
