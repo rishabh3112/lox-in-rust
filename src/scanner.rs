@@ -139,6 +139,8 @@ impl<'a> Scanner<'a> {
             return None;
         }
 
+        self.chars.next();
+
         return Some(TokenType::STRING(literal));
     }
 
