@@ -91,6 +91,7 @@ impl<'a> Scanner<'a> {
                             self.chars.next();
                             if next == '\n' {
                                 self.start = self.offset();
+                                self.line += 1;
                                 break;
                             }
                         }
