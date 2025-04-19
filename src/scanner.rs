@@ -119,10 +119,12 @@ impl<'a> Scanner<'a> {
     fn get_string_literal(&mut self) -> Option<TokenType> {
         let mut literal: String = String::new();
 
-        while let Some(next) = self.chars.next() {
+        while let Some(next) = self.peek() {
             if next == '"' {
                 break;
             }
+
+            self.chars.next();
 
             if next == '\n' {
                 self.line += 1
