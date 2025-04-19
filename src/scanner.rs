@@ -93,7 +93,7 @@ impl<'a> Scanner<'a> {
                     }
                 }
                 '"' => {
-                    if let Some(ty) = self.get_string_literal() {
+                    if let Some(ty) = self.match_string() {
                         return ty;
                     }
                 }
@@ -103,6 +103,12 @@ impl<'a> Scanner<'a> {
                     self.start += 1;
                 }
                 _ => {
+                    if char.is_ascii_digit() {
+                        if let Some(ty) = self.match_number() {
+                            return ty;
+                        }
+                    } else {
+                    }
                     self.start += 1;
                     self.errors.push(format!(
                         "[line {}] Error: Unexpected character: {}",
@@ -116,7 +122,7 @@ impl<'a> Scanner<'a> {
     }
 
     // handlers
-    fn get_string_literal(&mut self) -> Option<TokenType> {
+    fn match_string(&mut self) -> Option<TokenType> {
         let mut literal: String = String::new();
 
         while let Some(next) = self.peek() {
@@ -133,7 +139,7 @@ impl<'a> Scanner<'a> {
             literal.push(next);
         }
 
-        if self.chars.as_str().len() == 0 {
+        if self.offset() == self.source.len() {
             self.errors
                 .push(format!("[line {}] Error: Unterminated string.", self.line));
             return None;
@@ -144,9 +150,44 @@ impl<'a> Scanner<'a> {
         return Some(TokenType::STRING(literal));
     }
 
+    fn match_number(&mut self) -> Option<TokenType> {
+        while let Some(next) = self.peek() {
+            if next.is_ascii_digit() {
+                self.chars.next();
+                continue;
+            }
+            break;
+        }
+
+        if self.peek().is_some_and(|next| next == '.')
+            && self.peek_next().is_some_and(|next| next.is_ascii_digit())
+        {
+            self.chars.next();
+            while let Some(next) = self.peek() {
+                if next.is_ascii_digit() {
+                    self.chars.next();
+                    continue;
+                }
+                break;
+            }
+        }
+
+        let number_string = self.source[self.start..self.offset()].to_string();
+
+        return Some(TokenType::NUMBER(number_string.parse().unwrap()));
+    }
+
     // helpers
     fn peek(&mut self) -> Option<char> {
         self.chars.clone().next()
+    }
+
+    fn peek_next(&mut self) -> Option<char> {
+        let mut copy_chars = self.chars.clone();
+        if copy_chars.next().is_none() {
+            return None;
+        }
+        copy_chars.next()
     }
 
     fn match_next(&mut self, ch: char) -> bool {

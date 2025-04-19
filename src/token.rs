@@ -54,7 +54,7 @@ pub enum TokenType {
     // Literals.
     IDENTIFIER,
     STRING(String),
-    NUMBER(i32),
+    NUMBER(f32),
 
     // Keywords.
     AND,
