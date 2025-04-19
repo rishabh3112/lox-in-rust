@@ -183,7 +183,7 @@ impl<'a> Scanner<'a> {
 
     fn match_identifier(&mut self) -> Option<TokenType> {
         while let Some(next) = self.peek() {
-            if next.is_ascii_alphabetic() || next == '_' {
+            if next.is_ascii_alphanumeric() || next == '_' {
                 self.chars.next();
                 continue;
             }
