@@ -26,21 +26,19 @@ fn main() {
             });
 
             let mut scanner = Scanner::new(&file_contents);
-            let tokens;
-            let mut error = false;
-            match scanner.scan_tokens() {
-                Ok(t) => tokens = t,
-                Err(t) => {
-                    tokens = t;
-                    error = true
-                }
+
+            let output = scanner.run();
+            let has_errors = output.errors.len() > 0;
+
+            for error in output.errors {
+                eprintln!("{}", error);
             }
 
-            for token in tokens {
+            for token in output.tokens {
                 println!("{}", token)
             }
 
-            if error {
+            if has_errors {
                 exit(65)
             }
         }

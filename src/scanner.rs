@@ -1,12 +1,17 @@
 use crate::token::{Token, TokenType};
-use std::{error, str::Chars};
+use std::str::Chars;
 
 pub struct Scanner<'a> {
     source: &'a String,
     chars: Chars<'a>,
     line: usize,
-    errors: bool,
+    errors: Vec<String>,
     start: usize,
+}
+
+pub struct ScannerOutput {
+    pub tokens: Vec<Token>,
+    pub errors: Vec<String>,
 }
 
 impl<'a> Scanner<'a> {
@@ -15,12 +20,12 @@ impl<'a> Scanner<'a> {
             source,
             chars: source.chars(),
             line: 1,
-            errors: false,
+            errors: vec![],
             start: 0,
         }
     }
 
-    pub fn scan_tokens(self: &mut Self) -> Result<Vec<Token>, Vec<Token>> {
+    pub fn run(self: &mut Self) -> ScannerOutput {
         let mut tokens: Vec<Token> = vec![];
         loop {
             self.start = self.offset();
@@ -35,11 +40,12 @@ impl<'a> Scanner<'a> {
             tokens.push(Token::new(ty, Some(lexeme)));
         }
 
-        if self.errors {
-            Err(tokens)
-        } else {
-            Ok(tokens)
-        }
+        let output = ScannerOutput {
+            tokens,
+            errors: self.errors.clone(),
+        };
+
+        output
     }
 
     fn read_next_token(self: &mut Self) -> TokenType {
@@ -56,14 +62,41 @@ impl<'a> Scanner<'a> {
                 ';' => return TokenType::SEMICOLON,
                 '/' => return TokenType::COMMA,
                 '*' => return TokenType::STAR,
+                '!' => {
+                    if let Some(next) = self.peek() {
+                        match next {
+                            '=' => {
+                                self.chars.next();
+                                return TokenType::BANG_EQUAL;
+                            }
+                            _ => {}
+                        }
+                    }
+                    return TokenType::BANG;
+                }
+                '=' => {
+                    if let Some(next) = self.peek() {
+                        match next {
+                            '=' => {
+                                self.chars.next();
+                                return TokenType::EQUAL_EQUAL;
+                            }
+                            _ => {}
+                        }
+                    }
+                    return TokenType::EQUAL;
+                }
+                ' ' | '\t' => {}
                 '\n' => {
                     self.line += 1;
                     self.start += 1;
                 }
                 _ => {
                     self.start += 1;
-                    eprintln!("[line {}] Error: Unexpected character: {}", self.line, char);
-                    self.errors = true;
+                    self.errors.push(format!(
+                        "[line {}] Error: Unexpected character: {}",
+                        self.line, char
+                    ));
                 }
             }
         }
@@ -72,6 +105,10 @@ impl<'a> Scanner<'a> {
     }
 
     // helpers
+    fn peek(&mut self) -> Option<char> {
+        self.chars.clone().next()
+    }
+
     fn offset(&mut self) -> usize {
         return self.source.len() - self.chars.as_str().len();
     }
