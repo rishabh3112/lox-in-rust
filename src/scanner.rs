@@ -107,13 +107,17 @@ impl<'a> Scanner<'a> {
                         if let Some(ty) = self.match_number() {
                             return ty;
                         }
+                    } else if char.is_ascii_alphabetic() || char == '_' {
+                        if let Some(ty) = self.match_identifier() {
+                            return ty;
+                        }
                     } else {
+                        self.start += 1;
+                        self.errors.push(format!(
+                            "[line {}] Error: Unexpected character: {}",
+                            self.line, char
+                        ));
                     }
-                    self.start += 1;
-                    self.errors.push(format!(
-                        "[line {}] Error: Unexpected character: {}",
-                        self.line, char
-                    ));
                 }
             }
         }
@@ -175,6 +179,22 @@ impl<'a> Scanner<'a> {
         let number_string = self.source[self.start..self.offset()].to_string();
 
         return Some(TokenType::NUMBER(number_string.parse().unwrap()));
+    }
+
+    fn match_identifier(&mut self) -> Option<TokenType> {
+        while let Some(next) = self.peek() {
+            if next.is_ascii_alphabetic() || next == '_' {
+                self.chars.next();
+                continue;
+            }
+            break;
+        }
+
+        let lexeme = self.source[self.start..self.offset()].to_string();
+        if let Some(ty) = TokenType::get_keyword_token_type(lexeme) {
+            return Some(ty);
+        }
+        return Some(TokenType::IDENTIFIER);
     }
 
     // helpers

@@ -133,6 +133,29 @@ impl TokenType {
         }
     }
 
+    pub fn get_keyword_token_type(lexeme: String) -> Option<TokenType> {
+        match lexeme.as_str() {
+            "and" => Some(TokenType::AND),
+            "class" => Some(TokenType::CLASS),
+
+            "else" => Some(TokenType::ELSE),
+            "false" => Some(TokenType::FALSE),
+            "fun" => Some(TokenType::FUN),
+            "for" => Some(TokenType::FOR),
+            "if" => Some(TokenType::IF),
+            "nil" => Some(TokenType::NIL),
+            "or" => Some(TokenType::OR),
+            "print" => Some(TokenType::PRINT),
+            "return" => Some(TokenType::RETURN),
+            "super" => Some(TokenType::SUPER),
+            "this" => Some(TokenType::THIS),
+            "true" => Some(TokenType::TRUE),
+            "var" => Some(TokenType::VAR),
+            "while" => Some(TokenType::WHILE),
+            _ => None,
+        }
+    }
+
     fn literal(&self) -> String {
         match self {
             TokenType::STRING(str) => str.clone(),
