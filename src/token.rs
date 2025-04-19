@@ -54,7 +54,7 @@ pub enum TokenType {
     // Literals.
     IDENTIFIER,
     STRING(String),
-    NUMBER(f32),
+    NUMBER(f64),
 
     // Keywords.
     AND,
@@ -137,7 +137,6 @@ impl TokenType {
         match lexeme.as_str() {
             "and" => Some(TokenType::AND),
             "class" => Some(TokenType::CLASS),
-
             "else" => Some(TokenType::ELSE),
             "false" => Some(TokenType::FALSE),
             "fun" => Some(TokenType::FUN),
