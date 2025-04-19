@@ -135,7 +135,7 @@ impl<'a> Scanner<'a> {
 
         if self.chars.as_str().len() == 0 {
             self.errors
-                .push(format!("[line {}] Error: Unterminated string", self.line));
+                .push(format!("[line {}] Error: Unterminated string.", self.line));
             return None;
         }
 
