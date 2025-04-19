@@ -136,7 +136,7 @@ impl TokenType {
     fn literal(&self) -> String {
         match self {
             TokenType::STRING(str) => str.clone(),
-            TokenType::NUMBER(num) => num.to_string(),
+            TokenType::NUMBER(num) => format!("{:?}", num),
             _ => String::from("null"),
         }
     }
