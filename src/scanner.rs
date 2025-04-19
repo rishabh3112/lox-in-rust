@@ -98,7 +98,7 @@ impl<'a> Scanner<'a> {
                         return TokenType::SLASH;
                     }
                 }
-                ' ' | '\t' => {}
+                ' ' | '\t' => self.start += 1,
                 '\n' => {
                     self.line += 1;
                     self.start += 1;
