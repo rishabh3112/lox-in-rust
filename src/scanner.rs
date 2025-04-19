@@ -87,16 +87,14 @@ impl<'a> Scanner<'a> {
                 }
                 '/' => {
                     if self.match_next('/') {
-                        while let Some(next) = self.peek() {
-                            self.chars.next();
-                            if next == '\n' {
-                                self.start = self.offset();
-                                self.line += 1;
-                                break;
-                            }
-                        }
+                        self.ignore_line();
                     } else {
                         return TokenType::SLASH;
+                    }
+                }
+                '"' => {
+                    if let Some(ty) = self.get_string_literal() {
+                        return ty;
                     }
                 }
                 ' ' | '\t' => self.start += 1,
@@ -117,6 +115,31 @@ impl<'a> Scanner<'a> {
         return TokenType::EOF;
     }
 
+    // handlers
+    fn get_string_literal(&mut self) -> Option<TokenType> {
+        let mut literal: String = String::new();
+
+        while let Some(next) = self.chars.next() {
+            if next == '"' {
+                break;
+            }
+
+            if next == '\n' {
+                self.line += 1
+            }
+
+            literal.push(next);
+        }
+
+        if self.chars.as_str().len() == 0 {
+            self.errors
+                .push(format!("[line {}] Error: Unterminated string", self.line));
+            return None;
+        }
+
+        return Some(TokenType::STRING(literal));
+    }
+
     // helpers
     fn peek(&mut self) -> Option<char> {
         self.chars.clone().next()
@@ -134,5 +157,15 @@ impl<'a> Scanner<'a> {
 
     fn offset(&mut self) -> usize {
         return self.source.len() - self.chars.as_str().len();
+    }
+
+    fn ignore_line(&mut self) {
+        while let Some(next) = self.chars.next() {
+            if next == '\n' {
+                self.start = self.offset();
+                self.line += 1;
+                break;
+            }
+        }
     }
 }
