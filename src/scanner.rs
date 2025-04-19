@@ -63,28 +63,28 @@ impl<'a> Scanner<'a> {
                 '/' => return TokenType::COMMA,
                 '*' => return TokenType::STAR,
                 '!' => {
-                    if let Some(next) = self.peek() {
-                        match next {
-                            '=' => {
-                                self.chars.next();
-                                return TokenType::BANG_EQUAL;
-                            }
-                            _ => {}
-                        }
+                    if self.match_next('=') {
+                        return TokenType::BANG_EQUAL;
                     }
                     return TokenType::BANG;
                 }
                 '=' => {
-                    if let Some(next) = self.peek() {
-                        match next {
-                            '=' => {
-                                self.chars.next();
-                                return TokenType::EQUAL_EQUAL;
-                            }
-                            _ => {}
-                        }
+                    if self.match_next('=') {
+                        return TokenType::EQUAL_EQUAL;
                     }
                     return TokenType::EQUAL;
+                }
+                '>' => {
+                    if self.match_next('=') {
+                        return TokenType::GREATER_EQUAL;
+                    };
+                    return TokenType::GREATER;
+                }
+                '<' => {
+                    if self.match_next('=') {
+                        return TokenType::LESS_EQUAL;
+                    };
+                    return TokenType::LESS;
                 }
                 ' ' | '\t' => {}
                 '\n' => {
@@ -107,6 +107,16 @@ impl<'a> Scanner<'a> {
     // helpers
     fn peek(&mut self) -> Option<char> {
         self.chars.clone().next()
+    }
+
+    fn match_next(&mut self, ch: char) -> bool {
+        if let Some(next) = self.peek() {
+            if ch == next {
+                self.chars.next();
+                return true;
+            }
+        }
+        false
     }
 
     fn offset(&mut self) -> usize {
