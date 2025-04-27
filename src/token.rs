@@ -26,7 +26,7 @@ impl Display for Token {
     }
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone)]
 pub enum TokenType {
     // Single-character tokens.
     LEFT_PAREN,
@@ -75,17 +75,6 @@ pub enum TokenType {
     WHILE,
 
     EOF,
-}
-
-impl Display for TokenType {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "[ Token: type = {}, literal = {} ]",
-            self.name(),
-            self.literal()
-        )
-    }
 }
 
 impl TokenType {
@@ -155,11 +144,13 @@ impl TokenType {
         }
     }
 
-    fn literal(&self) -> String {
+    pub fn literal(&self) -> String {
         match self {
             TokenType::STRING(str) => str.clone(),
             TokenType::NUMBER(num) => format!("{:?}", num),
-            _ => String::from("null"),
+            TokenType::TRUE => "true".into(),
+            TokenType::FALSE => "false".into(),
+            _ => String::from("nil"),
         }
     }
 }
