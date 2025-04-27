@@ -35,7 +35,7 @@ impl Visitor<String> for ASTPrinter {
     }
 
     fn visit_literal_expr(&self, literal_expr: &Literal) -> String {
-        format!("{}", literal_expr.literal.literal())
+        format!("{}", literal_expr.literal.value())
     }
 
     fn visit_unary_expr(&self, unary_expr: &Unary) -> String {

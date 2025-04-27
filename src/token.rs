@@ -144,14 +144,21 @@ impl TokenType {
         }
     }
 
-    pub fn literal(&self) -> String {
+    pub fn value(&self) -> String {
         match self {
             TokenType::STRING(str) => str.clone(),
             TokenType::NUMBER(num) => format!("{:?}", num),
             TokenType::TRUE => "true".into(),
             TokenType::FALSE => "false".into(),
-            TokenType::NIL => "null".into(),
             _ => String::from("nil"),
+        }
+    }
+
+    pub fn literal(&self) -> String {
+        match self {
+            TokenType::STRING(str) => str.clone(),
+            TokenType::NUMBER(num) => format!("{:?}", num),
+            _ => String::from("null"),
         }
     }
 }
