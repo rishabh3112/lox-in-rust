@@ -18,7 +18,7 @@ impl Token {
         Self {
             ty,
             lexeme: lexeme.unwrap_or(String::new()),
-            literal: literal.unwrap_or(Literal::Null),
+            literal: literal.unwrap_or(Literal::Nil),
             line: line.unwrap_or(1),
         }
     }
@@ -26,7 +26,13 @@ impl Token {
 
 impl Display for Token {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{} {} {}", self.ty.name(), self.lexeme, self.literal,)
+        write!(
+            f,
+            "{} {} {}",
+            self.ty.name(),
+            self.lexeme,
+            self.literal.value()
+        )
     }
 }
 
@@ -153,7 +159,7 @@ pub enum Literal {
     String(String),
     Number(f64),
     Boolean(bool),
-    Null,
+    Nil,
 }
 
 impl Clone for Literal {
@@ -162,7 +168,18 @@ impl Clone for Literal {
             Self::String(string) => Self::String(string.clone()),
             Self::Number(number) => Self::Number(number.clone()),
             Self::Boolean(boolean) => Self::Boolean(boolean.clone()),
-            Self::Null => Self::Null,
+            Self::Nil => Self::Nil,
+        }
+    }
+}
+
+impl Literal {
+    fn value(&self) -> String {
+        match self {
+            Literal::String(string) => format!("{}", string),
+            Literal::Number(number) => format!("{:?}", number),
+            Literal::Boolean(boolean) => format!("{}", boolean),
+            Literal::Nil => format!("null"),
         }
     }
 }
@@ -173,7 +190,7 @@ impl Display for Literal {
             Literal::String(string) => write!(f, "{}", string),
             Literal::Number(number) => write!(f, "{:?}", number),
             Literal::Boolean(boolean) => write!(f, "{}", boolean),
-            Literal::Null => write!(f, "nil"),
+            Literal::Nil => write!(f, "nil"),
         }
     }
 }

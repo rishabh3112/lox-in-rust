@@ -54,7 +54,7 @@ impl<'a> Scanner<'a> {
             TokenType::StringLit => Literal::String(raw[1..raw.len() - 1].to_string()),
             TokenType::NumberLit => Literal::Number(raw.parse().unwrap()),
             TokenType::False | TokenType::True => Literal::Boolean(raw.parse().unwrap()),
-            _ => Literal::Null,
+            _ => Literal::Nil,
         };
 
         Token::new(ty, Some(literal), Some(lexeme), Some(self.line))
