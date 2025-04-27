@@ -146,7 +146,6 @@ impl TokenType {
     }
 
     pub fn value(&self) -> String {
-        println!("token {}", self.name());
         match self {
             TokenType::STRING(str) => str.clone(),
             TokenType::NUMBER(num) => format!("{:?}", num),
