@@ -31,7 +31,7 @@ impl Display for Token {
             "{} {} {}",
             self.ty.name(),
             self.lexeme,
-            self.literal.value()
+            self.literal.token_print()
         )
     }
 }
@@ -174,12 +174,11 @@ impl Clone for Literal {
 }
 
 impl Literal {
-    fn value(&self) -> String {
+    fn token_print(&self) -> String {
         match self {
             Literal::String(string) => format!("{}", string),
             Literal::Number(number) => format!("{:?}", number),
-            Literal::Boolean(boolean) => format!("{}", boolean),
-            Literal::Nil => format!("null"),
+            _ => format!("null"),
         }
     }
 }
