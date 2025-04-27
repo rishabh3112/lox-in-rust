@@ -56,14 +56,14 @@ fn main() {
         "print" => {
             let expr = Expr::Binary(Binary {
                 left: Box::new(Expr::Literal(Literal {
-                    literal: token::TokenType::NUMBER(2.0),
+                    literal: token::TokenType::NumberLit(2.0),
                 })),
                 operator: token::Token {
-                    ty: token::TokenType::PLUS,
+                    ty: token::TokenType::Plus,
                     lexeme: "+".into(),
                 },
                 right: Box::new(Expr::Literal(Literal {
-                    literal: token::TokenType::NUMBER(3.0),
+                    literal: token::TokenType::NumberLit(3.0),
                 })),
             });
 

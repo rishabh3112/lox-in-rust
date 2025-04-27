@@ -51,45 +51,45 @@ impl<'a> Scanner<'a> {
     fn read_next_token(self: &mut Self) -> TokenType {
         while let Some(char) = self.chars.next() {
             match char {
-                '(' => return TokenType::LEFT_PAREN,
-                ')' => return TokenType::RIGHT_PAREN,
-                '{' => return TokenType::LEFT_BRACE,
-                '}' => return TokenType::RIGHT_BRACE,
-                '-' => return TokenType::MINUS,
-                '+' => return TokenType::PLUS,
-                ',' => return TokenType::COMMA,
-                '.' => return TokenType::DOT,
-                ';' => return TokenType::SEMICOLON,
-                '*' => return TokenType::STAR,
+                '(' => return TokenType::LeftParen,
+                ')' => return TokenType::RightParen,
+                '{' => return TokenType::LeftBrace,
+                '}' => return TokenType::RightBrace,
+                '-' => return TokenType::Minus,
+                '+' => return TokenType::Plus,
+                ',' => return TokenType::Comma,
+                '.' => return TokenType::Dot,
+                ';' => return TokenType::SemiColon,
+                '*' => return TokenType::Star,
                 '!' => {
                     if self.match_next('=') {
-                        return TokenType::BANG_EQUAL;
+                        return TokenType::BangEqual;
                     }
-                    return TokenType::BANG;
+                    return TokenType::Bang;
                 }
                 '=' => {
                     if self.match_next('=') {
-                        return TokenType::EQUAL_EQUAL;
+                        return TokenType::EqualEqual;
                     }
-                    return TokenType::EQUAL;
+                    return TokenType::Equal;
                 }
                 '>' => {
                     if self.match_next('=') {
-                        return TokenType::GREATER_EQUAL;
+                        return TokenType::GreaterEqual;
                     };
-                    return TokenType::GREATER;
+                    return TokenType::Greater;
                 }
                 '<' => {
                     if self.match_next('=') {
-                        return TokenType::LESS_EQUAL;
+                        return TokenType::LessEqual;
                     };
-                    return TokenType::LESS;
+                    return TokenType::Less;
                 }
                 '/' => {
                     if self.match_next('/') {
                         self.ignore_line();
                     } else {
-                        return TokenType::SLASH;
+                        return TokenType::Slash;
                     }
                 }
                 '"' => {
@@ -151,7 +151,7 @@ impl<'a> Scanner<'a> {
 
         self.chars.next();
 
-        return Some(TokenType::STRING(literal));
+        return Some(TokenType::StringLit(literal));
     }
 
     fn match_number(&mut self) -> Option<TokenType> {
@@ -178,7 +178,7 @@ impl<'a> Scanner<'a> {
 
         let number_string = self.source[self.start..self.offset()].to_string();
 
-        return Some(TokenType::NUMBER(number_string.parse().unwrap()));
+        return Some(TokenType::NumberLit(number_string.parse().unwrap()));
     }
 
     fn match_identifier(&mut self) -> Option<TokenType> {
@@ -194,7 +194,7 @@ impl<'a> Scanner<'a> {
         if let Some(ty) = TokenType::get_keyword_token_type(lexeme) {
             return Some(ty);
         }
-        return Some(TokenType::IDENTIFIER);
+        return Some(TokenType::Identifier);
     }
 
     // helpers

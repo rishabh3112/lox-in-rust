@@ -21,12 +21,55 @@ impl<'a> Parser<'a> {
     }
 
     fn expression(&mut self) -> Expr {
-        self.factor()
+        self.equality()
+    }
+
+    fn equality(&mut self) -> Expr {
+        let mut left = self.comparison();
+        while self.match_token(EqualEqual) || self.match_token(BangEqual) {
+            left = Expr::Binary(Binary {
+                left: Box::new(left),
+                operator: self.previous().clone(),
+                right: Box::new(self.comparison()),
+            })
+        }
+
+        left
+    }
+
+    fn comparison(&mut self) -> Expr {
+        let mut left = self.term();
+        while self.match_token(Greater)
+            || self.match_token(GreaterEqual)
+            || self.match_token(Less)
+            || self.match_token(LessEqual)
+        {
+            left = Expr::Binary(Binary {
+                left: Box::new(left),
+                operator: self.previous().clone(),
+                right: Box::new(self.term()),
+            })
+        }
+
+        left
+    }
+
+    fn term(&mut self) -> Expr {
+        let mut left = self.factor();
+        while self.match_token(Plus) || self.match_token(Minus) {
+            left = Expr::Binary(Binary {
+                left: Box::new(left),
+                operator: self.previous().clone(),
+                right: Box::new(self.factor()),
+            })
+        }
+
+        left
     }
 
     fn factor(&mut self) -> Expr {
         let mut left = self.unary();
-        while self.match_token(STAR) || self.match_token(SLASH) {
+        while self.match_token(Star) || self.match_token(Slash) {
             left = Expr::Binary(Binary {
                 left: Box::new(left),
                 operator: self.previous().clone(),
@@ -38,7 +81,7 @@ impl<'a> Parser<'a> {
     }
 
     fn unary(&mut self) -> Expr {
-        if self.match_token(BANG) || self.match_token(MINUS) {
+        if self.match_token(Bang) || self.match_token(Minus) {
             return Expr::Unary(Unary {
                 operator: self.previous().clone(),
                 right: Box::new(self.unary()),
@@ -48,14 +91,13 @@ impl<'a> Parser<'a> {
     }
 
     fn primary(&mut self) -> Expr {
-        if self.match_token(LEFT_PAREN) {
+        if self.match_token(LeftParen) {
             let group = Expr::Grouping(Grouping {
                 expression: Box::new(self.expression()),
             });
 
-            if !self.match_token(RIGHT_PAREN) {
+            if !self.match_token(RightParen) {
                 // Handle syntax error here
-                self.advance();
             }
 
             return group;
@@ -67,6 +109,7 @@ impl<'a> Parser<'a> {
     // helpers
 
     fn match_token(&mut self, ty: TokenType) -> bool {
+        // println!("match {} with {}", ty.name(), self.peek().ty.name());
         if self.check(ty) {
             self.advance();
             return true;
