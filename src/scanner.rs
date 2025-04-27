@@ -51,7 +51,9 @@ impl<'a> Scanner<'a> {
         let raw = self.source[self.start..self.offset()].to_string();
         let lexeme = raw.clone();
         let literal = match ty {
-            TokenType::StringLit => Literal::String(raw),
+            TokenType::StringLit => {
+                Literal::String(raw[self.start + 1..self.offset() - 1].to_string())
+            }
             TokenType::NumberLit => Literal::Number(raw.parse().unwrap()),
             TokenType::False | TokenType::True => Literal::Boolean(raw.parse().unwrap()),
             _ => Literal::Null,
