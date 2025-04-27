@@ -89,7 +89,7 @@ fn main() {
                 eprintln!("{}", error);
             }
 
-            let parser = Parser::new(&output.tokens);
+            let mut parser = Parser::new(&output.tokens);
             let expr = parser.parse();
 
             let ast_printer = ASTPrinter::new();

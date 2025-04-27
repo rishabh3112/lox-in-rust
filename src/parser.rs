@@ -16,16 +16,25 @@ impl<'a> Parser<'a> {
         Parser { tokens, current: 0 }
     }
 
-    pub fn parse(&self) -> Expr {
-        self.literal()
+    pub fn parse(&mut self) -> Expr {
+        self.expression()
     }
 
-    fn expression(&self) -> Expr {
-        self.literal()
+    fn expression(&mut self) -> Expr {
+        self.primary()
     }
 
-    fn literal(&self) -> Expr {
+    fn primary(&mut self) -> Expr {
         let literal = self.peek().ty.clone();
+        if self.match_token(LEFT_PAREN) {
+            let expr = self.expression();
+            if !self.match_token(RIGHT_PAREN) {
+                // Handle syntax error here
+                self.advance();
+            }
+
+            return expr;
+        }
         Expr::Literal(Literal { literal })
     }
 

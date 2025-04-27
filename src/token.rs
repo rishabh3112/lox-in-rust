@@ -154,7 +154,7 @@ impl TokenType {
         }
     }
 
-    pub fn literal(&self) -> String {
+    fn literal(&self) -> String {
         match self {
             TokenType::STRING(str) => str.clone(),
             TokenType::NUMBER(num) => format!("{:?}", num),
