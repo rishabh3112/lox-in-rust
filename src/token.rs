@@ -1,5 +1,6 @@
 use std::fmt::{self, Display, Formatter};
 
+#[derive(Clone)]
 pub struct Token {
     pub ty: TokenType,
     pub lexeme: String,

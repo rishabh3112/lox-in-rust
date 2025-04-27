@@ -1,5 +1,5 @@
 use crate::{
-    ast::nodes::{Binary, Expr, Grouping, Literal},
+    ast::nodes::{Binary, Expr, Grouping, Literal, Unary},
     token::{
         Token,
         TokenType::{self, *},
@@ -21,7 +21,18 @@ impl<'a> Parser<'a> {
     }
 
     fn expression(&mut self) -> Expr {
-        self.primary()
+        self.unary()
+    }
+
+    fn unary(&mut self) -> Expr {
+        let primary_expr = self.primary();
+        if self.match_token(BANG) || self.match_token(MINUS) {
+            return Expr::Unary(Unary {
+                operator: self.previous().clone(),
+                right: Box::new(primary_expr),
+            });
+        }
+        primary_expr
     }
 
     fn primary(&mut self) -> Expr {
