@@ -173,7 +173,7 @@ impl Display for Literal {
             Literal::String(string) => write!(f, "{}", string),
             Literal::Number(number) => write!(f, "{:?}", number),
             Literal::Boolean(boolean) => write!(f, "{}", boolean),
-            Literal::Null => write!(f, "null"),
+            Literal::Null => write!(f, "nil"),
         }
     }
 }
