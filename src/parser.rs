@@ -1,5 +1,5 @@
 use crate::{
-    ast::nodes::{Binary, Expr, Literal},
+    ast::nodes::{Binary, Expr, Grouping, Literal},
     token::{
         Token,
         TokenType::{self, *},
@@ -33,7 +33,9 @@ impl<'a> Parser<'a> {
                 self.advance();
             }
 
-            return expr;
+            return Expr::Grouping(Grouping {
+                expression: Box::new(expr),
+            });
         }
         Expr::Literal(Literal { literal })
     }
