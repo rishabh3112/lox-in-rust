@@ -79,7 +79,7 @@ pub enum TokenType {
 }
 
 impl TokenType {
-    fn name(&self) -> String {
+    pub fn name(&self) -> String {
         match self {
             TokenType::LEFT_PAREN => String::from("LEFT_PAREN"),
             TokenType::RIGHT_PAREN => String::from("RIGHT_PAREN"),

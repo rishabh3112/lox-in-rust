@@ -21,7 +21,20 @@ impl<'a> Parser<'a> {
     }
 
     fn expression(&mut self) -> Expr {
-        self.unary()
+        self.factor()
+    }
+
+    fn factor(&mut self) -> Expr {
+        let mut left = self.unary();
+        while self.match_token(STAR) || self.match_token(SLASH) {
+            left = Expr::Binary(Binary {
+                left: Box::new(left),
+                operator: self.previous().clone(),
+                right: Box::new(self.unary()),
+            })
+        }
+
+        left
     }
 
     fn unary(&mut self) -> Expr {
@@ -35,18 +48,17 @@ impl<'a> Parser<'a> {
     }
 
     fn primary(&mut self) -> Expr {
-        let literal = self.peek().ty.clone();
         if self.match_token(LEFT_PAREN) {
-            let expr = self.expression();
             if !self.match_token(RIGHT_PAREN) {
                 // Handle syntax error here
                 self.advance();
             }
 
             return Expr::Grouping(Grouping {
-                expression: Box::new(expr),
+                expression: Box::new(self.expression()),
             });
         }
+        let literal = self.advance().ty.clone();
         Expr::Literal(Literal { literal })
     }
 
