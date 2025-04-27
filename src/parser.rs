@@ -1,5 +1,5 @@
 use crate::{
-    ast::nodes::{Binary, Expr, Grouping, Literal, Unary},
+    ast::nodes::{Binary, Expr, Grouping, Lit, Unary},
     token::{
         Token,
         TokenType::{self, *},
@@ -16,29 +16,29 @@ impl<'a> Parser<'a> {
         Parser { tokens, current: 0 }
     }
 
-    pub fn parse(&mut self) -> Expr {
+    pub fn parse(&mut self) -> Result<Expr, String> {
         self.expression()
     }
 
-    fn expression(&mut self) -> Expr {
+    fn expression(&mut self) -> Result<Expr, String> {
         self.equality()
     }
 
-    fn equality(&mut self) -> Expr {
-        let mut left = self.comparison();
+    fn equality(&mut self) -> Result<Expr, String> {
+        let mut left = self.comparison()?;
         while self.match_token(EqualEqual) || self.match_token(BangEqual) {
             left = Expr::Binary(Binary {
                 left: Box::new(left),
                 operator: self.previous().clone(),
-                right: Box::new(self.comparison()),
+                right: Box::new(self.comparison()?),
             })
         }
 
-        left
+        Ok(left)
     }
 
-    fn comparison(&mut self) -> Expr {
-        let mut left = self.term();
+    fn comparison(&mut self) -> Result<Expr, String> {
+        let mut left = self.term()?;
         while self.match_token(Greater)
             || self.match_token(GreaterEqual)
             || self.match_token(Less)
@@ -47,73 +47,85 @@ impl<'a> Parser<'a> {
             left = Expr::Binary(Binary {
                 left: Box::new(left),
                 operator: self.previous().clone(),
-                right: Box::new(self.term()),
+                right: Box::new(self.term()?),
             })
         }
 
-        left
+        Ok(left)
     }
 
-    fn term(&mut self) -> Expr {
-        let mut left = self.factor();
+    fn term(&mut self) -> Result<Expr, String> {
+        let mut left = self.factor()?;
         while self.match_token(Plus) || self.match_token(Minus) {
             left = Expr::Binary(Binary {
                 left: Box::new(left),
                 operator: self.previous().clone(),
-                right: Box::new(self.factor()),
+                right: Box::new(self.factor()?),
             })
         }
 
-        left
+        Ok(left)
     }
 
-    fn factor(&mut self) -> Expr {
-        let mut left = self.unary();
+    fn factor(&mut self) -> Result<Expr, String> {
+        let mut left = self.unary()?;
         while self.match_token(Star) || self.match_token(Slash) {
             left = Expr::Binary(Binary {
                 left: Box::new(left),
                 operator: self.previous().clone(),
-                right: Box::new(self.unary()),
+                right: Box::new(self.unary()?),
             })
         }
 
-        left
+        Ok(left)
     }
 
-    fn unary(&mut self) -> Expr {
+    fn unary(&mut self) -> Result<Expr, String> {
         if self.match_token(Bang) || self.match_token(Minus) {
-            return Expr::Unary(Unary {
+            return Ok(Expr::Unary(Unary {
                 operator: self.previous().clone(),
-                right: Box::new(self.unary()),
-            });
+                right: Box::new(self.unary()?),
+            }));
         }
+
         self.primary()
     }
 
-    fn primary(&mut self) -> Expr {
+    fn primary(&mut self) -> Result<Expr, String> {
+        if self.match_token(True)
+            || self.match_token(False)
+            || self.match_token(Nil)
+            || self.match_token(NumberLit)
+            || self.match_token(StringLit)
+        {
+            return Ok(Expr::Literal(Lit {
+                literal: self.previous().literal.clone(),
+            }));
+        }
+
         if self.match_token(LeftParen) {
             let group = Expr::Grouping(Grouping {
-                expression: Box::new(self.expression()),
+                expression: Box::new(self.expression()?),
             });
 
             if !self.match_token(RightParen) {
-                // Handle syntax error here
+                return self.error("Expect ')' after expression.");
             }
 
-            return group;
+            return Ok(group);
         }
-        let literal = self.advance().ty.clone();
-        Expr::Literal(Literal { literal })
+
+        self.error("Expect expression")
     }
 
     // helpers
-
     fn match_token(&mut self, ty: TokenType) -> bool {
-        // println!("match {} with {}", ty.name(), self.peek().ty.name());
+        //println!("match {} with {}", ty.name(), self.peek().ty.name());
         if self.check(ty) {
             self.advance();
             return true;
         }
+
         false
     }
 
@@ -138,9 +150,23 @@ impl<'a> Parser<'a> {
     }
 
     fn advance(&mut self) -> &Token {
-        if !self.is_at_end() {
-            self.current += 1;
-        }
+        self.current += 1;
         self.previous()
+    }
+
+    fn error(&mut self, message: &str) -> Result<Expr, String> {
+        let err_token = self.peek();
+
+        if self.is_at_end() {
+            return Err(format!(
+                "[line {}] Error at end: {}",
+                err_token.line, message
+            ));
+        }
+
+        Err(format!(
+            "[line {}] Error at '{}': {}",
+            err_token.line, err_token.lexeme, message
+        ))
     }
 }

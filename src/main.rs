@@ -12,7 +12,7 @@ use std::process::exit;
 
 use ast::nodes::Binary;
 use ast::nodes::Expr;
-use ast::nodes::Literal;
+use ast::nodes::Lit;
 use ast::traits::Visitor;
 use parser::Parser;
 use scanner::Scanner;
@@ -53,23 +53,6 @@ fn main() {
                 exit(65)
             }
         }
-        "print" => {
-            let expr = Expr::Binary(Binary {
-                left: Box::new(Expr::Literal(Literal {
-                    literal: token::TokenType::NumberLit(2.0),
-                })),
-                operator: token::Token {
-                    ty: token::TokenType::Plus,
-                    lexeme: "+".into(),
-                },
-                right: Box::new(Expr::Literal(Literal {
-                    literal: token::TokenType::NumberLit(3.0),
-                })),
-            });
-
-            let ast_printer = ASTPrinter::new();
-            println!("{}", ast_printer.visit_expr(&expr))
-        }
         "generate" => match filename.as_str() {
             "ast" => generate_ast(),
             _ => {}
@@ -83,17 +66,22 @@ fn main() {
             let mut scanner = Scanner::new(&file_contents);
 
             let output = scanner.run();
-            let has_errors = output.errors.len() > 0;
+            let mut has_errors = output.errors.len() > 0;
 
             for error in output.errors {
                 eprintln!("{}", error);
             }
 
             let mut parser = Parser::new(&output.tokens);
-            let expr = parser.parse();
-
             let ast_printer = ASTPrinter::new();
-            println!("{}", ast_printer.visit_expr(&expr));
+
+            match parser.parse() {
+                Ok(expr) => println!("{}", ast_printer.visit_expr(&expr)),
+                Err(error) => {
+                    eprintln!("{}", error);
+                    has_errors = true;
+                }
+            }
 
             if has_errors {
                 exit(65)

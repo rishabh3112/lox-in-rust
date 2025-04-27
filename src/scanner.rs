@@ -1,4 +1,4 @@
-use crate::token::{Token, TokenType};
+use crate::token::{Literal, Token, TokenType};
 use std::str::Chars;
 
 pub struct Scanner<'a> {
@@ -32,12 +32,11 @@ impl<'a> Scanner<'a> {
             let ty = self.read_next_token();
 
             if ty == TokenType::EOF {
-                tokens.push(Token::new(ty, None));
+                tokens.push(Token::new(ty, None, None, Some(self.line)));
                 break;
             }
 
-            let lexeme = self.source[self.start..self.offset()].to_string();
-            tokens.push(Token::new(ty, Some(lexeme)));
+            tokens.push(self.create_token(ty));
         }
 
         let output = ScannerOutput {
@@ -46,6 +45,19 @@ impl<'a> Scanner<'a> {
         };
 
         output
+    }
+
+    fn create_token(&mut self, ty: TokenType) -> Token {
+        let raw = self.source[self.start..self.offset()].to_string();
+        let lexeme = raw.clone();
+        let literal = match ty {
+            TokenType::StringLit => Literal::String(raw),
+            TokenType::NumberLit => Literal::Number(raw.parse().unwrap()),
+            TokenType::False | TokenType::True => Literal::Boolean(raw.parse().unwrap()),
+            _ => Literal::Null,
+        };
+
+        Token::new(ty, Some(literal), Some(lexeme), Some(self.line))
     }
 
     fn read_next_token(self: &mut Self) -> TokenType {
@@ -151,7 +163,7 @@ impl<'a> Scanner<'a> {
 
         self.chars.next();
 
-        return Some(TokenType::StringLit(literal));
+        return Some(TokenType::StringLit);
     }
 
     fn match_number(&mut self) -> Option<TokenType> {
@@ -176,9 +188,7 @@ impl<'a> Scanner<'a> {
             }
         }
 
-        let number_string = self.source[self.start..self.offset()].to_string();
-
-        return Some(TokenType::NumberLit(number_string.parse().unwrap()));
+        return Some(TokenType::NumberLit);
     }
 
     fn match_identifier(&mut self) -> Option<TokenType> {

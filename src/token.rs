@@ -4,26 +4,29 @@ use std::fmt::{self, Display, Formatter};
 pub struct Token {
     pub ty: TokenType,
     pub lexeme: String,
+    pub literal: Literal,
+    pub line: usize,
 }
 
 impl Token {
-    pub fn new(ty: TokenType, lexeme: Option<String>) -> Self {
+    pub fn new(
+        ty: TokenType,
+        literal: Option<Literal>,
+        lexeme: Option<String>,
+        line: Option<usize>,
+    ) -> Self {
         Self {
             ty,
             lexeme: lexeme.unwrap_or(String::new()),
+            literal: literal.unwrap_or(Literal::Null),
+            line: line.unwrap_or(1),
         }
     }
 }
 
 impl Display for Token {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{} {} {}",
-            self.ty.name(),
-            self.lexeme,
-            self.ty.literal()
-        )
+        write!(f, "{} {} {}", self.ty.name(), self.lexeme, self.literal,)
     }
 }
 
@@ -54,8 +57,8 @@ pub enum TokenType {
 
     // Literals.
     Identifier,
-    StringLit(String),
-    NumberLit(f64),
+    StringLit,
+    NumberLit,
 
     // Keywords.
     And,
@@ -101,8 +104,8 @@ impl TokenType {
             TokenType::Less => String::from("LESS"),
             TokenType::LessEqual => String::from("LESS_EQUAL"),
             TokenType::Identifier => String::from("IDENTIFIER"),
-            TokenType::StringLit(_) => String::from("STRING"),
-            TokenType::NumberLit(_) => String::from("NUMBER"),
+            TokenType::StringLit => String::from("STRING"),
+            TokenType::NumberLit => String::from("NUMBER"),
             TokenType::And => String::from("AND"),
             TokenType::Class => String::from("CLASS"),
             TokenType::Else => String::from("ELSE"),
@@ -144,22 +147,33 @@ impl TokenType {
             _ => None,
         }
     }
+}
 
-    pub fn value(&self) -> String {
+pub enum Literal {
+    String(String),
+    Number(f64),
+    Boolean(bool),
+    Null,
+}
+
+impl Clone for Literal {
+    fn clone(&self) -> Self {
         match self {
-            TokenType::StringLit(str) => str.clone(),
-            TokenType::NumberLit(num) => format!("{:?}", num),
-            TokenType::True => "true".into(),
-            TokenType::False => "false".into(),
-            _ => String::from("nil"),
+            Self::String(string) => Self::String(string.clone()),
+            Self::Number(number) => Self::Number(number.clone()),
+            Self::Boolean(boolean) => Self::Boolean(boolean.clone()),
+            Self::Null => Self::Null,
         }
     }
+}
 
-    fn literal(&self) -> String {
+impl Display for Literal {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
-            TokenType::StringLit(str) => str.clone(),
-            TokenType::NumberLit(num) => format!("{:?}", num),
-            _ => String::from("null"),
+            Literal::String(string) => write!(f, "{}", string),
+            Literal::Number(number) => write!(f, "{:?}", number),
+            Literal::Boolean(boolean) => write!(f, "{}", boolean),
+            Literal::Null => write!(f, "null"),
         }
     }
 }

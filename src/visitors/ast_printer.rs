@@ -1,5 +1,5 @@
 use crate::ast::{
-    nodes::{Binary, Expr, Grouping, Literal, Unary},
+    nodes::{Binary, Expr, Grouping, Lit, Unary},
     traits::{Visit, Visitor},
 };
 
@@ -34,8 +34,8 @@ impl Visitor<String> for ASTPrinter {
         format!("(group {})", grouping_expr.expression.accept(self))
     }
 
-    fn visit_literal_expr(&self, literal_expr: &Literal) -> String {
-        format!("{}", literal_expr.literal.value())
+    fn visit_literal_expr(&self, literal_expr: &Lit) -> String {
+        format!("{}", literal_expr.literal)
     }
 
     fn visit_unary_expr(&self, unary_expr: &Unary) -> String {

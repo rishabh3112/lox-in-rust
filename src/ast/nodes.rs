@@ -1,11 +1,10 @@
-use crate::token::{Token, TokenType};
-
 use super::traits::{Visit, Visitor};
+use crate::token::{Literal, Token};
 
 pub enum Expr {
     Binary(Binary),
     Grouping(Grouping),
-    Literal(Literal),
+    Literal(Lit),
     Unary(Unary),
 }
 
@@ -37,11 +36,11 @@ impl<R, V: Visitor<R>> Visit<R, V> for Grouping {
     }
 }
 
-pub struct Literal {
-    pub literal: TokenType,
+pub struct Lit {
+    pub literal: Literal,
 }
 
-impl<R, V: Visitor<R>> Visit<R, V> for Literal {
+impl<R, V: Visitor<R>> Visit<R, V> for Lit {
     fn accept(&self, visitor: &V) -> R {
         V::visit_literal_expr(visitor, self)
     }
