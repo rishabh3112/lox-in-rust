@@ -150,7 +150,7 @@ impl TokenType {
             TokenType::NUMBER(num) => format!("{:?}", num),
             TokenType::TRUE => "true".into(),
             TokenType::FALSE => "false".into(),
-            _ => String::from("nil"),
+            _ => String::from("null"),
         }
     }
 }
