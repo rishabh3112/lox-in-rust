@@ -155,6 +155,7 @@ impl TokenType {
     }
 }
 
+#[repr(u8)]
 pub enum Literal {
     String(String),
     Number(f64),

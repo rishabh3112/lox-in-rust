@@ -10,14 +10,12 @@ use std::fs;
 use std::io::{self, Write};
 use std::process::exit;
 
-use ast::nodes::Binary;
-use ast::nodes::Expr;
-use ast::nodes::Lit;
 use ast::traits::Visitor;
 use parser::Parser;
 use scanner::Scanner;
 use tools::generate_ast;
 use visitors::ast_printer::ASTPrinter;
+use visitors::interpreter::Interpreter;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -77,6 +75,36 @@ fn main() {
 
             match parser.parse() {
                 Ok(expr) => println!("{}", ast_printer.visit_expr(&expr)),
+                Err(error) => {
+                    eprintln!("{}", error);
+                    has_errors = true;
+                }
+            }
+
+            if has_errors {
+                exit(65)
+            }
+        }
+        "evaluate" => {
+            let file_contents = fs::read_to_string(filename).unwrap_or_else(|_| {
+                writeln!(io::stderr(), "Failed to read file {}", filename).unwrap();
+                String::new()
+            });
+
+            let mut scanner = Scanner::new(&file_contents);
+
+            let output = scanner.run();
+            let mut has_errors = output.errors.len() > 0;
+
+            for error in output.errors {
+                eprintln!("{}", error);
+            }
+
+            let mut parser = Parser::new(&output.tokens);
+            let interpreter = Interpreter {};
+
+            match parser.parse() {
+                Ok(expr) => println!("{}", interpreter.visit_expr(&expr).unwrap()),
                 Err(error) => {
                     eprintln!("{}", error);
                     has_errors = true;
