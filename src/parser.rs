@@ -25,14 +25,13 @@ impl<'a> Parser<'a> {
     }
 
     fn unary(&mut self) -> Expr {
-        let primary_expr = self.primary();
         if self.match_token(BANG) || self.match_token(MINUS) {
             return Expr::Unary(Unary {
                 operator: self.previous().clone(),
-                right: Box::new(primary_expr),
+                right: Box::new(self.primary()),
             });
         }
-        primary_expr
+        self.primary()
     }
 
     fn primary(&mut self) -> Expr {
