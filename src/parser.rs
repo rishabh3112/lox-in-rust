@@ -28,7 +28,7 @@ impl<'a> Parser<'a> {
         if self.match_token(BANG) || self.match_token(MINUS) {
             return Expr::Unary(Unary {
                 operator: self.previous().clone(),
-                right: Box::new(self.primary()),
+                right: Box::new(self.unary()),
             });
         }
         self.primary()
