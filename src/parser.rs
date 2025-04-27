@@ -49,14 +49,16 @@ impl<'a> Parser<'a> {
 
     fn primary(&mut self) -> Expr {
         if self.match_token(LEFT_PAREN) {
+            let group = Expr::Grouping(Grouping {
+                expression: Box::new(self.expression()),
+            });
+
             if !self.match_token(RIGHT_PAREN) {
                 // Handle syntax error here
                 self.advance();
             }
 
-            return Expr::Grouping(Grouping {
-                expression: Box::new(self.expression()),
-            });
+            return group;
         }
         let literal = self.advance().ty.clone();
         Expr::Literal(Literal { literal })
