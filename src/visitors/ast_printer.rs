@@ -1,6 +1,9 @@
-use crate::ast::{
-    nodes::{Binary, Expr, Grouping, Lit, Unary},
-    traits::{Visit, Visitor},
+use crate::{
+    ast::{
+        nodes::{Binary, Expr, Grouping, Lit, Unary},
+        traits::{Visit, Visitor},
+    },
+    token::Literal,
 };
 
 pub struct ASTPrinter {}
@@ -35,7 +38,12 @@ impl Visitor<String> for ASTPrinter {
     }
 
     fn visit_literal_expr(&self, literal_expr: &Lit) -> String {
-        format!("{}", literal_expr.literal)
+        match &literal_expr.literal {
+            Literal::String(string) => format!("{}", string),
+            Literal::Number(number) => format!("{:?}", number),
+            Literal::Boolean(boolean) => format!("{}", boolean),
+            Literal::Nil => format!("nil"),
+        }
     }
 
     fn visit_unary_expr(&self, unary_expr: &Unary) -> String {
