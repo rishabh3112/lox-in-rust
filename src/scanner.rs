@@ -161,7 +161,7 @@ impl<'a> Scanner<'a> {
         if self.offset() == self.source.len() {
             self.errors.push(LoxError::Scanner {
                 line: self.line,
-                message: "Unterminated string".into(),
+                message: "Unterminated string.".into(),
             });
             return None;
         }
