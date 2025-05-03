@@ -58,12 +58,12 @@ impl Visitor<Result<Literal, LoxError>> for Interpreter {
             TokenType::Comma => Ok(right_result.clone()),
             TokenType::Minus => match (left_result, right_result) {
                 (Literal::Number(left), Literal::Number(right)) => {
-                    Ok(Literal::Number(left + right))
+                    Ok(Literal::Number(left - right))
                 }
 
                 (_, _) => Err(LoxError::Runtime {
                     token: binary_expr.operator.clone(),
-                    message: "Expected both operands to number".into(),
+                    message: "Operands must be numbers.".into(),
                 }),
             },
             TokenType::Plus => match (left_result, right_result) {
@@ -75,7 +75,7 @@ impl Visitor<Result<Literal, LoxError>> for Interpreter {
                 }
                 (_, _) => Err(LoxError::Runtime {
                     token: binary_expr.operator.clone(),
-                    message: "Expected both operands to number or string".into(),
+                    message: "Operands must be two numbers or two strings.".into(),
                 }),
             },
             TokenType::Slash => match (left_result, right_result) {
@@ -85,7 +85,7 @@ impl Visitor<Result<Literal, LoxError>> for Interpreter {
 
                 (_, _) => Err(LoxError::Runtime {
                     token: binary_expr.operator.clone(),
-                    message: "Expected both operands to number".into(),
+                    message: "Operands must be numbers.".into(),
                 }),
             },
             TokenType::Star => match (left_result, right_result) {
@@ -95,7 +95,7 @@ impl Visitor<Result<Literal, LoxError>> for Interpreter {
 
                 (_, _) => Err(LoxError::Runtime {
                     token: binary_expr.operator.clone(),
-                    message: "Expected both operands to number".into(),
+                    message: "Operands must be numbers.".into(),
                 }),
             },
             TokenType::BangEqual => self.are_equal(left_result, right_result, false),
@@ -107,7 +107,7 @@ impl Visitor<Result<Literal, LoxError>> for Interpreter {
 
                 (_, _) => Err(LoxError::Runtime {
                     token: binary_expr.operator.clone(),
-                    message: "Expected both operands to number".into(),
+                    message: "Operands must be numbers.".into(),
                 }),
             },
             TokenType::GreaterEqual => match (left_result, right_result) {
@@ -117,7 +117,7 @@ impl Visitor<Result<Literal, LoxError>> for Interpreter {
 
                 (_, _) => Err(LoxError::Runtime {
                     token: binary_expr.operator.clone(),
-                    message: "Expected both operands to number".into(),
+                    message: "Operands must be numbers.".into(),
                 }),
             },
             TokenType::Less => match (left_result, right_result) {
@@ -127,7 +127,7 @@ impl Visitor<Result<Literal, LoxError>> for Interpreter {
 
                 (_, _) => Err(LoxError::Runtime {
                     token: binary_expr.operator.clone(),
-                    message: "Expected both operands to number".into(),
+                    message: "Operands must be numbers.".into(),
                 }),
             },
             TokenType::LessEqual => match (left_result, right_result) {
@@ -137,7 +137,7 @@ impl Visitor<Result<Literal, LoxError>> for Interpreter {
 
                 (_, _) => Err(LoxError::Runtime {
                     token: binary_expr.operator.clone(),
-                    message: "Expected both operands to number".into(),
+                    message: "Operands must be numbers.".into(),
                 }),
             },
             _ => Err(LoxError::Runtime {
@@ -163,7 +163,7 @@ impl Visitor<Result<Literal, LoxError>> for Interpreter {
                 Literal::Number(number) => Ok(Literal::Number(number * -1.0)),
                 _ => Err(LoxError::Runtime {
                     token: unary_expr.operator.clone(),
-                    message: "Expected number".into(),
+                    message: "Operand must be a number.".into(),
                 }),
             },
             TokenType::Bang => self.is_truthy(right_result, true),
