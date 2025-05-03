@@ -1,17 +1,20 @@
-use crate::token::{Literal, Token, TokenType};
+use crate::{
+    error::LoxError,
+    token::{Literal, Token, TokenType},
+};
 use std::str::Chars;
 
 pub struct Scanner<'a> {
     source: &'a String,
     chars: Chars<'a>,
     line: usize,
-    errors: Vec<String>,
+    errors: Vec<LoxError>,
     start: usize,
 }
 
 pub struct ScannerOutput {
     pub tokens: Vec<Token>,
-    pub errors: Vec<String>,
+    pub errors: Vec<LoxError>,
 }
 
 impl<'a> Scanner<'a> {
@@ -125,10 +128,10 @@ impl<'a> Scanner<'a> {
                         }
                     } else {
                         self.start += 1;
-                        self.errors.push(format!(
-                            "[line {}] Error: Unexpected character: {}",
-                            self.line, char
-                        ));
+                        self.errors.push(LoxError::Scanner {
+                            line: self.line,
+                            message: format!("Unexpected character: {}", char),
+                        })
                     }
                 }
             }
@@ -156,8 +159,10 @@ impl<'a> Scanner<'a> {
         }
 
         if self.offset() == self.source.len() {
-            self.errors
-                .push(format!("[line {}] Error: Unterminated string.", self.line));
+            self.errors.push(LoxError::Scanner {
+                line: self.line,
+                message: "Unterminated string".into(),
+            });
             return None;
         }
 

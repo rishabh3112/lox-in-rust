@@ -1,5 +1,6 @@
 use crate::{
     ast::nodes::{Binary, Expr, Grouping, Lit, Unary},
+    error::LoxError,
     token::{
         Token,
         TokenType::{self, *},
@@ -16,15 +17,15 @@ impl<'a> Parser<'a> {
         Parser { tokens, current: 0 }
     }
 
-    pub fn parse(&mut self) -> Result<Expr, String> {
+    pub fn parse(&mut self) -> Result<Expr, LoxError> {
         self.expression()
     }
 
-    fn expression(&mut self) -> Result<Expr, String> {
+    fn expression(&mut self) -> Result<Expr, LoxError> {
         self.equality()
     }
 
-    fn equality(&mut self) -> Result<Expr, String> {
+    fn equality(&mut self) -> Result<Expr, LoxError> {
         let mut left = self.comparison()?;
         while self.match_token(EqualEqual) || self.match_token(BangEqual) {
             left = Expr::Binary(Binary {
@@ -37,7 +38,7 @@ impl<'a> Parser<'a> {
         Ok(left)
     }
 
-    fn comparison(&mut self) -> Result<Expr, String> {
+    fn comparison(&mut self) -> Result<Expr, LoxError> {
         let mut left = self.term()?;
         while self.match_token(Greater)
             || self.match_token(GreaterEqual)
@@ -54,7 +55,7 @@ impl<'a> Parser<'a> {
         Ok(left)
     }
 
-    fn term(&mut self) -> Result<Expr, String> {
+    fn term(&mut self) -> Result<Expr, LoxError> {
         let mut left = self.factor()?;
         while self.match_token(Plus) || self.match_token(Minus) {
             left = Expr::Binary(Binary {
@@ -67,7 +68,7 @@ impl<'a> Parser<'a> {
         Ok(left)
     }
 
-    fn factor(&mut self) -> Result<Expr, String> {
+    fn factor(&mut self) -> Result<Expr, LoxError> {
         let mut left = self.unary()?;
         while self.match_token(Star) || self.match_token(Slash) {
             left = Expr::Binary(Binary {
@@ -80,7 +81,7 @@ impl<'a> Parser<'a> {
         Ok(left)
     }
 
-    fn unary(&mut self) -> Result<Expr, String> {
+    fn unary(&mut self) -> Result<Expr, LoxError> {
         if self.match_token(Bang) || self.match_token(Minus) {
             return Ok(Expr::Unary(Unary {
                 operator: self.previous().clone(),
@@ -91,7 +92,7 @@ impl<'a> Parser<'a> {
         self.primary()
     }
 
-    fn primary(&mut self) -> Result<Expr, String> {
+    fn primary(&mut self) -> Result<Expr, LoxError> {
         if self.match_token(True)
             || self.match_token(False)
             || self.match_token(Nil)
@@ -154,19 +155,12 @@ impl<'a> Parser<'a> {
         self.previous()
     }
 
-    fn error(&mut self, message: &str) -> Result<Expr, String> {
-        let err_token = self.peek();
+    fn error(&mut self, message: &str) -> Result<Expr, LoxError> {
+        let err_token = self.peek().clone();
 
-        if self.is_at_end() {
-            return Err(format!(
-                "[line {}] Error at end: {}",
-                err_token.line, message
-            ));
-        }
-
-        Err(format!(
-            "[line {}] Error at '{}': {}",
-            err_token.line, err_token.lexeme, message
-        ))
+        Err(LoxError::Parser {
+            token: err_token,
+            message: message.into(),
+        })
     }
 }
