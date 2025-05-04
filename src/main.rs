@@ -96,8 +96,10 @@ fn main() {
 
             let output = scanner.run();
             let mut has_errors = output.errors.len() > 0;
+            let mut error_code = 65;
 
             for error in output.errors {
+                // compile time error - during scanning
                 eprintln!("{}", error);
             }
 
@@ -105,15 +107,24 @@ fn main() {
             let interpreter = Interpreter {};
 
             match parser.parse() {
-                Ok(expr) => println!("{}", interpreter.visit_expr(&expr).unwrap()),
+                Ok(expr) => match interpreter.visit_expr(&expr) {
+                    Ok(result) => println!("{}", result),
+                    Err(error) => {
+                        // runtime error
+                        has_errors = true;
+                        eprintln!("{}", error);
+                        error_code = 70;
+                    }
+                },
                 Err(error) => {
-                    eprintln!("{}", error);
+                    // compiler time error
                     has_errors = true;
+                    eprintln!("{}", error);
                 }
-            }
+            };
 
             if has_errors {
-                exit(65)
+                exit(error_code)
             }
         }
         _ => {
