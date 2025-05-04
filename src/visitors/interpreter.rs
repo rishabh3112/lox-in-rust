@@ -1,7 +1,7 @@
 use crate::{
     ast::{
-        nodes::{Binary, Expr, Grouping, Lit, Unary},
-        traits::{Visit, Visitor},
+        nodes::{Binary, Expr, ExpressionStmt, Grouping, Lit, PrintStmt, Stmt, Unary},
+        traits::{ExprVisitor, StmtVisitor, VisitExpr},
     },
     error::LoxError,
     token::{Literal, TokenType},
@@ -10,6 +10,13 @@ use crate::{
 pub struct Interpreter {}
 
 impl Interpreter {
+    pub fn interpret(&self, statements: &Vec<Stmt>) -> Result<(), LoxError> {
+        for statement in statements {
+            self.visit_statement(statement)?;
+        }
+        Ok(())
+    }
+
     fn get_boolean_literal(&self, value: bool, invert: bool) -> Literal {
         if invert {
             Literal::Boolean(!value)
@@ -45,7 +52,7 @@ impl Interpreter {
     }
 }
 
-impl Visitor<Result<Literal, LoxError>> for Interpreter {
+impl ExprVisitor<Result<Literal, LoxError>> for Interpreter {
     fn visit_expr(&self, expr: &Expr) -> Result<Literal, LoxError> {
         match expr {
             Expr::Binary(binary) => self.visit_binary_expr(binary),
@@ -177,5 +184,24 @@ impl Visitor<Result<Literal, LoxError>> for Interpreter {
                 message: "Invalid unary expression found".into(),
             }),
         }
+    }
+}
+
+impl StmtVisitor<Result<(), LoxError>> for Interpreter {
+    fn visit_statement(&self, stmt: &Stmt) -> Result<(), LoxError> {
+        match stmt {
+            Stmt::Print(print_stmt) => self.visit_print(print_stmt),
+            Stmt::Expression(expr_stmt) => self.visit_expression(expr_stmt),
+        }
+    }
+
+    fn visit_expression(&self, expr_stmt: &ExpressionStmt) -> Result<(), LoxError> {
+        self.visit_expr(&expr_stmt.expression)?;
+        Ok(())
+    }
+
+    fn visit_print(&self, print_stmt: &PrintStmt) -> Result<(), LoxError> {
+        println!("{}", self.visit_expr(&print_stmt.expression)?);
+        Ok(())
     }
 }

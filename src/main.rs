@@ -11,7 +11,7 @@ use std::fs;
 use std::io::{self, Write};
 use std::process::exit;
 
-use ast::traits::Visitor;
+use ast::traits::ExprVisitor;
 use parser::Parser;
 use scanner::Scanner;
 use tools::generate_ast;
@@ -74,7 +74,7 @@ fn main() {
             let mut parser = Parser::new(&output.tokens);
             let ast_printer = ASTPrinter::new();
 
-            match parser.parse() {
+            match parser.expression() {
                 Ok(expr) => println!("{}", ast_printer.visit_expr(&expr)),
                 Err(error) => {
                     eprintln!("{}", error);
@@ -107,8 +107,8 @@ fn main() {
             let interpreter = Interpreter {};
 
             match parser.parse() {
-                Ok(expr) => match interpreter.visit_expr(&expr) {
-                    Ok(result) => println!("{}", result),
+                Ok(statements) => match interpreter.interpret(&statements) {
+                    Ok(result) => {}
                     Err(error) => {
                         // runtime error
                         has_errors = true;

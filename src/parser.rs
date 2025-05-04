@@ -1,5 +1,5 @@
 use crate::{
-    ast::nodes::{Binary, Expr, Grouping, Lit, Unary},
+    ast::nodes::{Binary, Expr, ExpressionStmt, Grouping, Lit, PrintStmt, Stmt, Unary},
     error::LoxError,
     token::{
         Token,
@@ -17,11 +17,39 @@ impl<'a> Parser<'a> {
         Parser { tokens, current: 0 }
     }
 
-    pub fn parse(&mut self) -> Result<Expr, LoxError> {
-        self.expression()
+    pub fn parse(&mut self) -> Result<Vec<Stmt>, LoxError> {
+        let mut statements: Vec<Stmt> = vec![];
+        while !self.is_at_end() {
+            statements.push(self.statement()?);
+        }
+        Ok(statements)
     }
 
-    fn expression(&mut self) -> Result<Expr, LoxError> {
+    fn statement(&mut self) -> Result<Stmt, LoxError> {
+        if self.match_token(Print) {
+            return self.print_statement();
+        }
+
+        self.expression_statement()
+    }
+
+    fn print_statement(&mut self) -> Result<Stmt, LoxError> {
+        let result = self.expression()?;
+        if !self.match_token(SemiColon) {
+            return Err(self.error("Expect ; after expression."));
+        }
+        Ok(Stmt::Print(PrintStmt { expression: result }))
+    }
+
+    fn expression_statement(&mut self) -> Result<Stmt, LoxError> {
+        let result = self.expression()?;
+        if !self.match_token(SemiColon) {
+            return Err(self.error("Expect ; after expression."));
+        }
+        Ok(Stmt::Expression(ExpressionStmt { expression: result }))
+    }
+
+    pub fn expression(&mut self) -> Result<Expr, LoxError> {
         self.equality()
     }
 
@@ -110,13 +138,13 @@ impl<'a> Parser<'a> {
             });
 
             if !self.match_token(RightParen) {
-                return self.error("Expect ')' after expression.");
+                return Err(self.error("Expect ')' after expression."));
             }
 
             return Ok(group);
         }
 
-        self.error("Expect expression")
+        Err(self.error("Expect expression"))
     }
 
     // helpers
@@ -155,12 +183,12 @@ impl<'a> Parser<'a> {
         self.previous()
     }
 
-    fn error(&mut self, message: &str) -> Result<Expr, LoxError> {
+    fn error(&mut self, message: &str) -> LoxError {
         let err_token = self.peek().clone();
 
-        Err(LoxError::Parser {
+        LoxError::Parser {
             token: err_token,
             message: message.into(),
-        })
+        }
     }
 }

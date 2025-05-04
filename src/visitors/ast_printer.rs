@@ -1,7 +1,7 @@
 use crate::{
     ast::{
         nodes::{Binary, Expr, Grouping, Lit, Unary},
-        traits::{Visit, Visitor},
+        traits::{ExprVisitor, VisitExpr},
     },
     token::Literal,
 };
@@ -14,7 +14,7 @@ impl ASTPrinter {
     }
 }
 
-impl Visitor<String> for ASTPrinter {
+impl ExprVisitor<String> for ASTPrinter {
     fn visit_expr(&self, expr: &Expr) -> String {
         match expr {
             Expr::Binary(binary) => self.visit_binary_expr(binary),
