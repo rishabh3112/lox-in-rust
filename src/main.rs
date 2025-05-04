@@ -106,9 +106,51 @@ fn main() {
             let mut parser = Parser::new(&output.tokens);
             let interpreter = Interpreter {};
 
+            match parser.expression() {
+                Ok(expr) => match interpreter.visit_expr(&expr) {
+                    Ok(expr) => println!("{}", expr),
+                    Err(error) => {
+                        // runtime error
+                        has_errors = true;
+                        eprintln!("{}", error);
+                        error_code = 70;
+                    }
+                },
+                Err(error) => {
+                    // compiler time error
+                    has_errors = true;
+                    eprintln!("{}", error);
+                }
+            };
+
+            if has_errors {
+                exit(error_code)
+            }
+        }
+
+        "run" => {
+            let file_contents = fs::read_to_string(filename).unwrap_or_else(|_| {
+                writeln!(io::stderr(), "failed to read file {}", filename).unwrap();
+                String::new()
+            });
+
+            let mut scanner = Scanner::new(&file_contents);
+
+            let output = scanner.run();
+            let mut has_errors = output.errors.len() > 0;
+            let mut error_code = 65;
+
+            for error in output.errors {
+                // compile time error - during scanning
+                eprintln!("{}", error);
+            }
+
+            let mut parser = Parser::new(&output.tokens);
+            let interpreter = Interpreter {};
+
             match parser.parse() {
                 Ok(statements) => match interpreter.interpret(&statements) {
-                    Ok(result) => {}
+                    Ok(_result) => {}
                     Err(error) => {
                         // runtime error
                         has_errors = true;
