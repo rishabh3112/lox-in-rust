@@ -28,15 +28,20 @@ impl Interpreter {
     }
 
     fn are_equal(&self, x: Literal, y: Literal, invert: bool) -> Result<Literal, LoxError> {
-        let x_lit = self.is_truthy(x, false)?;
-        let y_lit = self.is_truthy(y, false)?;
-
-        match (x_lit, y_lit) {
-            (Literal::Boolean(left), Literal::Boolean(right)) => {
-                Ok(self.get_boolean_literal(left == right, invert))
-            }
-            (_, _) => unreachable!(),
-        }
+        //     match (x, y) {
+        //         (Literal::Number(left), Literal::Number(right)) => {
+        //             Ok(self.get_boolean_literal(left == right, invert))
+        //         }
+        //         (Literal::String(left), Literal::String(right)) => {
+        //             Ok(self.get_boolean_literal(left.eq(&right), invert))
+        //         }
+        //         (Literal::Boolean(left), Literal::Boolean(right)) => {
+        //             Ok(self.get_boolean_literal(left == right, invert))
+        //         }
+        //         (Literal::Nil, Literal::Nil) => Ok(self.get_boolean_literal(true, invert)),
+        //         (_, _) => Ok(self.get_boolean_literal(false, invert)),
+        //     }
+        Ok(self.get_boolean_literal(x == y, invert))
     }
 }
 
@@ -98,8 +103,8 @@ impl Visitor<Result<Literal, LoxError>> for Interpreter {
                     message: "Operands must be numbers.".into(),
                 }),
             },
-            TokenType::BangEqual => self.are_equal(left_result, right_result, false),
-            TokenType::EqualEqual => self.are_equal(left_result, right_result, true),
+            TokenType::BangEqual => self.are_equal(left_result, right_result, true),
+            TokenType::EqualEqual => self.are_equal(left_result, right_result, false),
             TokenType::Greater => match (left_result, right_result) {
                 (Literal::Number(left), Literal::Number(right)) => {
                     Ok(Literal::Boolean(left > right))

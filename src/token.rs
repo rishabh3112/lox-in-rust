@@ -155,7 +155,7 @@ impl TokenType {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Literal {
     String(String),
     Number(f64),
