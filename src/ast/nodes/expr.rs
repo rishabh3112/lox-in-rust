@@ -9,6 +9,7 @@ pub enum Expr {
     Literal(Lit),
     Unary(Unary),
     Variable(Variable),
+    Assign(Assign),
 }
 
 pub struct Binary {
@@ -32,6 +33,11 @@ pub struct Unary {
 
 pub struct Variable {
     pub token: Token,
+}
+
+pub struct Assign {
+    pub token: Token,
+    pub value: Box<Expr>,
 }
 
 // VisitExpr impl
@@ -68,5 +74,11 @@ impl<R, V: ExprVisitor<R>> VisitExpr<R, V> for Unary {
 impl<R, V: ExprVisitor<R>> VisitExpr<R, V> for Variable {
     fn accept(&self, visitor: &mut V) -> R {
         V::visit_variable_expr(visitor, self)
+    }
+}
+
+impl<R, V: ExprVisitor<R>> VisitExpr<R, V> for Assign {
+    fn accept(&self, visitor: &mut V) -> R {
+        V::visit_assign_expr(visitor, self)
     }
 }

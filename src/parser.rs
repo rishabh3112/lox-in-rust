@@ -1,6 +1,6 @@
 use crate::{
     ast::nodes::{
-        Binary, Expr, ExpressionStmt, Grouping, Lit, PrintStmt, Stmt, Unary, Variable,
+        Assign, Binary, Expr, ExpressionStmt, Grouping, Lit, PrintStmt, Stmt, Unary, Variable,
         VariableDeclaration,
     },
     error::LoxError,
@@ -104,7 +104,28 @@ impl<'a> Parser<'a> {
     }
 
     pub fn expression(&mut self) -> Result<Expr, LoxError> {
-        self.equality()
+        self.assignment()
+    }
+
+    fn assignment(&mut self) -> Result<Expr, LoxError> {
+        let left = self.equality();
+
+        if self.match_token(Equal) {
+            let value = self.assignment()?;
+
+            if let Ok(expr) = &left {
+                if let Expr::Variable(variable) = expr {
+                    return Ok(Expr::Assign(Assign {
+                        token: variable.token.clone(),
+                        value: Box::new(value),
+                    }));
+                }
+            }
+
+            return Err(self.error("Invalid assignment target."));
+        }
+
+        left
     }
 
     fn equality(&mut self) -> Result<Expr, LoxError> {

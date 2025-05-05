@@ -1,7 +1,7 @@
 use crate::{
     ast::{
         nodes::{
-            Binary, Expr, ExpressionStmt, Grouping, Lit, PrintStmt, Stmt, Unary, Variable,
+            Assign, Binary, Expr, ExpressionStmt, Grouping, Lit, PrintStmt, Stmt, Unary, Variable,
             VariableDeclaration,
         },
         traits::{ExprVisitor, StmtVisitor, VisitExpr},
@@ -86,6 +86,7 @@ impl<'a> ExprVisitor<Result<Literal, LoxError>> for Interpreter<'a> {
             Expr::Literal(lit) => self.visit_literal_expr(lit),
             Expr::Unary(unary) => self.visit_unary_expr(unary),
             Expr::Variable(variable) => self.visit_variable_expr(variable),
+            Expr::Assign(assign) => self.visit_assign_expr(assign),
         }
     }
 
@@ -215,5 +216,18 @@ impl<'a> ExprVisitor<Result<Literal, LoxError>> for Interpreter<'a> {
 
     fn visit_variable_expr(&mut self, variable_expr: &Variable) -> Result<Literal, LoxError> {
         self.environment.get(&variable_expr.token)
+    }
+
+    fn visit_assign_expr(&mut self, assign_expr: &Assign) -> Result<Literal, LoxError> {
+        match self.environment.get(&assign_expr.token) {
+            Ok(_) => {
+                let token = assign_expr.token.clone();
+                let val = assign_expr.value.accept(self)?;
+
+                self.environment.define(token, val.clone());
+                Ok(val)
+            }
+            Err(error) => Err(error),
+        }
     }
 }

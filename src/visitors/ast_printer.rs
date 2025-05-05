@@ -22,6 +22,7 @@ impl ExprVisitor<String> for ASTPrinter {
             Expr::Literal(literal) => self.visit_literal_expr(literal),
             Expr::Unary(unary) => self.visit_unary_expr(unary),
             Expr::Variable(_variable) => todo!(),
+            Expr::Assign(assign) => todo!(),
         }
     }
 
@@ -56,6 +57,10 @@ impl ExprVisitor<String> for ASTPrinter {
     }
 
     fn visit_variable_expr(&mut self, _variable_expr: &crate::ast::nodes::Variable) -> String {
+        todo!()
+    }
+
+    fn visit_assign_expr(&mut self, assign_expr: &crate::ast::nodes::Assign) -> String {
         todo!()
     }
 }
