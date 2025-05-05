@@ -1,8 +1,11 @@
 use crate::{
-    ast::nodes::{Binary, Expr, ExpressionStmt, Grouping, Lit, PrintStmt, Stmt, Unary},
+    ast::nodes::{
+        Binary, Expr, ExpressionStmt, Grouping, Lit, PrintStmt, Stmt, Unary, Variable,
+        VariableDeclaration,
+    },
     error::LoxError,
     token::{
-        Token,
+        Literal, Token,
         TokenType::{self, *},
     },
 };
@@ -17,12 +20,61 @@ impl<'a> Parser<'a> {
         Parser { tokens, current: 0 }
     }
 
-    pub fn parse(&mut self) -> Result<Vec<Stmt>, LoxError> {
+    pub fn parse(&mut self) -> Result<Vec<Stmt>, Vec<LoxError>> {
         let mut statements: Vec<Stmt> = vec![];
+        let mut errors: Vec<LoxError> = vec![];
         while !self.is_at_end() {
-            statements.push(self.statement()?);
+            match self.declaration() {
+                Ok(statement) => statements.push(statement),
+                Err(error) => {
+                    error.log();
+                    errors.push(error);
+                }
+            }
         }
+
+        if errors.len() > 0 {
+            return Err(errors);
+        }
+
         Ok(statements)
+    }
+
+    fn declaration(&mut self) -> Result<Stmt, LoxError> {
+        let result = if self.match_token(Var) {
+            self.variable_declaration()
+        } else {
+            self.statement()
+        };
+
+        match result {
+            Ok(declaration) => Ok(declaration),
+            Err(error) => {
+                self.synchronize();
+                Err(error)
+            }
+        }
+    }
+
+    fn variable_declaration(&mut self) -> Result<Stmt, LoxError> {
+        if self.match_token(Identifier) {
+            let token = self.previous().clone();
+            let mut initializer: Expr = Expr::Literal(Lit {
+                literal: Literal::Nil,
+            });
+
+            if self.match_token(Equal) {
+                initializer = self.expression()?;
+            }
+
+            if !self.match_token(SemiColon) {
+                return Err(self.error("Expect ; after variable declaration."));
+            }
+
+            return Ok(Stmt::Variable(VariableDeclaration { token, initializer }));
+        }
+
+        self.statement()
     }
 
     fn statement(&mut self) -> Result<Stmt, LoxError> {
@@ -38,6 +90,7 @@ impl<'a> Parser<'a> {
         if !self.match_token(SemiColon) {
             return Err(self.error("Expect ; after expression."));
         }
+
         Ok(Stmt::Print(PrintStmt { expression: result }))
     }
 
@@ -46,6 +99,7 @@ impl<'a> Parser<'a> {
         if !self.match_token(SemiColon) {
             return Err(self.error("Expect ; after expression."));
         }
+
         Ok(Stmt::Expression(ExpressionStmt { expression: result }))
     }
 
@@ -144,6 +198,12 @@ impl<'a> Parser<'a> {
             return Ok(group);
         }
 
+        if self.match_token(Identifier) {
+            return Ok(Expr::Variable(Variable {
+                token: self.previous().clone(),
+            }));
+        }
+
         Err(self.error("Expect expression"))
     }
 
@@ -190,5 +250,20 @@ impl<'a> Parser<'a> {
             token: err_token,
             message: message.into(),
         }
+    }
+
+    fn synchronize(&mut self) {
+        self.advance();
+        while !self.is_at_end() {
+            if self.previous().ty == SemiColon {
+                return;
+            }
+
+            match self.peek().ty {
+                Class | For | Fun | Var | If | While | Print | Return => return,
+                _ => {}
+            }
+        }
+        self.advance();
     }
 }

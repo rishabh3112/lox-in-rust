@@ -1,4 +1,5 @@
 mod ast;
+mod environment;
 mod error;
 mod parser;
 mod scanner;
@@ -6,12 +7,14 @@ mod token;
 mod tools;
 mod visitors;
 
+use std::collections::HashMap;
 use std::env;
 use std::fs;
 use std::io::{self, Write};
 use std::process::exit;
 
 use ast::traits::ExprVisitor;
+use environment::Environment;
 use parser::Parser;
 use scanner::Scanner;
 use tools::generate_ast;
@@ -72,7 +75,7 @@ fn main() {
             }
 
             let mut parser = Parser::new(&output.tokens);
-            let ast_printer = ASTPrinter::new();
+            let mut ast_printer = ASTPrinter::new();
 
             match parser.expression() {
                 Ok(expr) => println!("{}", ast_printer.visit_expr(&expr)),
@@ -104,7 +107,9 @@ fn main() {
             }
 
             let mut parser = Parser::new(&output.tokens);
-            let interpreter = Interpreter {};
+            let mut hash_map = HashMap::new();
+            let mut environment = Environment::new(&mut hash_map);
+            let mut interpreter = Interpreter::new(&mut environment);
 
             match parser.expression() {
                 Ok(expr) => match interpreter.visit_expr(&expr) {
@@ -112,14 +117,14 @@ fn main() {
                     Err(error) => {
                         // runtime error
                         has_errors = true;
-                        eprintln!("{}", error);
+                        error.log();
                         error_code = 70;
                     }
                 },
                 Err(error) => {
                     // compiler time error
                     has_errors = true;
-                    eprintln!("{}", error);
+                    error.log();
                 }
             };
 
@@ -141,12 +146,13 @@ fn main() {
             let mut error_code = 65;
 
             for error in output.errors {
-                // compile time error - during scanning
-                eprintln!("{}", error);
+                error.log();
             }
 
             let mut parser = Parser::new(&output.tokens);
-            let interpreter = Interpreter {};
+            let mut hash_map = HashMap::new();
+            let mut environment = Environment::new(&mut hash_map);
+            let mut interpreter = Interpreter::new(&mut environment);
 
             match parser.parse() {
                 Ok(statements) => match interpreter.interpret(&statements) {
@@ -154,14 +160,13 @@ fn main() {
                     Err(error) => {
                         // runtime error
                         has_errors = true;
-                        eprintln!("{}", error);
+                        error.log();
                         error_code = 70;
                     }
                 },
-                Err(error) => {
+                Err(_errors) => {
                     // compiler time error
                     has_errors = true;
-                    eprintln!("{}", error);
                 }
             };
 

@@ -34,7 +34,7 @@ fn report(f: &mut std::fmt::Formatter<'_>, token: &Token, message: &String) -> s
 }
 
 impl LoxError {
-    fn print(&self) {
+    pub fn log(&self) {
         eprintln!("{}", self)
     }
 }

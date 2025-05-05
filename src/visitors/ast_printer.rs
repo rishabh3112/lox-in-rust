@@ -15,16 +15,17 @@ impl ASTPrinter {
 }
 
 impl ExprVisitor<String> for ASTPrinter {
-    fn visit_expr(&self, expr: &Expr) -> String {
+    fn visit_expr(&mut self, expr: &Expr) -> String {
         match expr {
             Expr::Binary(binary) => self.visit_binary_expr(binary),
             Expr::Grouping(grouping) => self.visit_grouping_expr(grouping),
             Expr::Literal(literal) => self.visit_literal_expr(literal),
             Expr::Unary(unary) => self.visit_unary_expr(unary),
+            Expr::Variable(_variable) => todo!(),
         }
     }
 
-    fn visit_binary_expr(&self, binary_expr: &Binary) -> String {
+    fn visit_binary_expr(&mut self, binary_expr: &Binary) -> String {
         format!(
             "({} {} {})",
             binary_expr.operator.lexeme,
@@ -33,11 +34,11 @@ impl ExprVisitor<String> for ASTPrinter {
         )
     }
 
-    fn visit_grouping_expr(&self, grouping_expr: &Grouping) -> String {
+    fn visit_grouping_expr(&mut self, grouping_expr: &Grouping) -> String {
         format!("(group {})", grouping_expr.expression.accept(self))
     }
 
-    fn visit_literal_expr(&self, literal_expr: &Lit) -> String {
+    fn visit_literal_expr(&mut self, literal_expr: &Lit) -> String {
         match &literal_expr.literal {
             Literal::String(string) => format!("{}", string),
             Literal::Number(number) => format!("{:?}", number),
@@ -46,11 +47,15 @@ impl ExprVisitor<String> for ASTPrinter {
         }
     }
 
-    fn visit_unary_expr(&self, unary_expr: &Unary) -> String {
+    fn visit_unary_expr(&mut self, unary_expr: &Unary) -> String {
         format!(
             "({} {})",
             unary_expr.operator.lexeme,
             unary_expr.right.accept(self)
         )
+    }
+
+    fn visit_variable_expr(&mut self, _variable_expr: &crate::ast::nodes::Variable) -> String {
+        todo!()
     }
 }
