@@ -253,8 +253,7 @@ impl<'a> Parser<'a> {
     }
 
     fn synchronize(&mut self) {
-        self.advance();
-        while !self.is_at_end() {
+        loop {
             if self.previous().ty == SemiColon {
                 return;
             }
@@ -263,7 +262,11 @@ impl<'a> Parser<'a> {
                 Class | For | Fun | Var | If | While | Print | Return => return,
                 _ => {}
             }
+
+            if self.is_at_end() {
+                return;
+            }
+            self.advance();
         }
-        self.advance();
     }
 }
