@@ -101,7 +101,6 @@ impl<'a> Parser<'a> {
         }
 
         if !self.match_token(RightBrace) {
-            self.advance();
             return Err(self.error("Expect '}' after block."));
         }
 
