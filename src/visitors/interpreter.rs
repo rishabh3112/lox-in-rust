@@ -1,8 +1,8 @@
 use crate::{
     ast::{
         nodes::{
-            Assign, Binary, Expr, ExpressionStmt, Grouping, Lit, PrintStmt, Stmt, Unary, Variable,
-            VariableDeclaration,
+            Assign, Binary, BlockStmt, Expr, ExpressionStmt, Grouping, Lit, PrintStmt, Stmt, Unary,
+            Variable, VariableDeclarationStmt,
         },
         traits::{ExprVisitor, StmtVisitor, VisitExpr},
     },
@@ -11,13 +11,15 @@ use crate::{
     token::{Literal, TokenType},
 };
 
-pub struct Interpreter<'a> {
-    environment: &'a mut Environment<'a>,
+pub struct Interpreter {
+    environment: Environment,
 }
 
-impl<'a> Interpreter<'a> {
-    pub fn new(environment: &'a mut Environment<'a>) -> Self {
-        Interpreter { environment }
+impl Interpreter {
+    pub fn new() -> Self {
+        Interpreter {
+            environment: Environment::new(None),
+        }
     }
 
     pub fn interpret(&mut self, statements: &Vec<Stmt>) -> Result<(), LoxError> {
@@ -49,12 +51,13 @@ impl<'a> Interpreter<'a> {
     }
 }
 
-impl<'a> StmtVisitor<Result<(), LoxError>> for Interpreter<'a> {
+impl StmtVisitor<Result<(), LoxError>> for Interpreter {
     fn visit_statement(&mut self, stmt: &Stmt) -> Result<(), LoxError> {
         match stmt {
             Stmt::Print(print_stmt) => self.visit_print(print_stmt),
             Stmt::Expression(expr_stmt) => self.visit_expression(expr_stmt),
             Stmt::Variable(variable_stmt) => self.visit_variable_declaration(variable_stmt),
+            Stmt::Block(block_stmt) => self.visit_block(block_stmt),
         }
     }
 
@@ -70,15 +73,24 @@ impl<'a> StmtVisitor<Result<(), LoxError>> for Interpreter<'a> {
 
     fn visit_variable_declaration(
         &mut self,
-        variable_stmt: &VariableDeclaration,
+        variable_stmt: &VariableDeclarationStmt,
     ) -> Result<(), LoxError> {
         let result = self.visit_expr(&variable_stmt.initializer)?;
         self.environment.define(variable_stmt.token.clone(), result);
         Ok(())
     }
+
+    fn visit_block(&mut self, block_stmt: &BlockStmt) -> Result<(), LoxError> {
+        self.environment.start_scope();
+        for statement in &block_stmt.statements {
+            self.visit_statement(&statement)?;
+        }
+        self.environment.close_scope();
+        Ok(())
+    }
 }
 
-impl<'a> ExprVisitor<Result<Literal, LoxError>> for Interpreter<'a> {
+impl ExprVisitor<Result<Literal, LoxError>> for Interpreter {
     fn visit_expr(&mut self, expr: &Expr) -> Result<Literal, LoxError> {
         match expr {
             Expr::Binary(binary) => self.visit_binary_expr(binary),
@@ -219,15 +231,7 @@ impl<'a> ExprVisitor<Result<Literal, LoxError>> for Interpreter<'a> {
     }
 
     fn visit_assign_expr(&mut self, assign_expr: &Assign) -> Result<Literal, LoxError> {
-        match self.environment.get(&assign_expr.token) {
-            Ok(_) => {
-                let token = assign_expr.token.clone();
-                let val = assign_expr.value.accept(self)?;
-
-                self.environment.define(token, val.clone());
-                Ok(val)
-            }
-            Err(error) => Err(error),
-        }
+        let value = assign_expr.value.accept(self)?;
+        self.environment.assign(&assign_expr.token, &value)
     }
 }

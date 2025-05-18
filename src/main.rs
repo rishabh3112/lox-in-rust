@@ -107,9 +107,7 @@ fn main() {
             }
 
             let mut parser = Parser::new(&output.tokens);
-            let mut hash_map = HashMap::new();
-            let mut environment = Environment::new(&mut hash_map);
-            let mut interpreter = Interpreter::new(&mut environment);
+            let mut interpreter = Interpreter::new();
 
             match parser.expression() {
                 Ok(expr) => match interpreter.visit_expr(&expr) {
@@ -150,9 +148,7 @@ fn main() {
             }
 
             let mut parser = Parser::new(&output.tokens);
-            let mut hash_map = HashMap::new();
-            let mut environment = Environment::new(&mut hash_map);
-            let mut interpreter = Interpreter::new(&mut environment);
+            let mut interpreter = Interpreter::new();
 
             match parser.parse() {
                 Ok(statements) => match interpreter.interpret(&statements) {

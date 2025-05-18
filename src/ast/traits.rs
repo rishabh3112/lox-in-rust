@@ -22,5 +22,6 @@ pub trait StmtVisitor<R> {
     fn visit_statement(&mut self, stmt: &Stmt) -> R;
     fn visit_expression(&mut self, expr_stmt: &ExpressionStmt) -> R;
     fn visit_print(&mut self, print_stmt: &PrintStmt) -> R;
-    fn visit_variable_declaration(&mut self, variable_stmt: &VariableDeclaration) -> R;
+    fn visit_variable_declaration(&mut self, variable_stmt: &VariableDeclarationStmt) -> R;
+    fn visit_block(&mut self, block_stmt: &BlockStmt) -> R;
 }

@@ -1,7 +1,7 @@
 use crate::{
     ast::nodes::{
-        Assign, Binary, Expr, ExpressionStmt, Grouping, Lit, PrintStmt, Stmt, Unary, Variable,
-        VariableDeclaration,
+        Assign, Binary, BlockStmt, Expr, ExpressionStmt, Grouping, Lit, PrintStmt, Stmt, Unary,
+        Variable, VariableDeclarationStmt,
     },
     error::LoxError,
     token::{
@@ -71,7 +71,10 @@ impl<'a> Parser<'a> {
                 return Err(self.error("Expect ; after variable declaration."));
             }
 
-            return Ok(Stmt::Variable(VariableDeclaration { token, initializer }));
+            return Ok(Stmt::Variable(VariableDeclarationStmt {
+                token,
+                initializer,
+            }));
         }
 
         self.statement()
@@ -82,7 +85,27 @@ impl<'a> Parser<'a> {
             return self.print_statement();
         }
 
+        if self.match_token(LeftBrace) {
+            return Ok(Stmt::Block(BlockStmt {
+                statements: self.block()?,
+            }));
+        }
+
         self.expression_statement()
+    }
+
+    fn block(&mut self) -> Result<Vec<Stmt>, LoxError> {
+        let mut statements: Vec<Stmt> = vec![];
+        while !self.check(RightBrace) && !self.is_at_end() {
+            statements.push(self.declaration()?)
+        }
+
+        if !self.match_token(RightBrace) {
+            self.advance();
+            return Err(self.error("Expect '}' after block."));
+        }
+
+        Ok(statements)
     }
 
     fn print_statement(&mut self) -> Result<Stmt, LoxError> {

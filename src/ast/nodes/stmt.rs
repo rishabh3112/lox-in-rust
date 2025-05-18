@@ -6,9 +6,14 @@ use crate::{
 use super::Expr;
 
 pub enum Stmt {
+    Block(BlockStmt),
     Expression(ExpressionStmt),
     Print(PrintStmt),
-    Variable(VariableDeclaration),
+    Variable(VariableDeclarationStmt),
+}
+
+pub struct BlockStmt {
+    pub statements: Vec<Stmt>,
 }
 
 pub struct ExpressionStmt {
@@ -19,12 +24,19 @@ pub struct PrintStmt {
     pub expression: Expr,
 }
 
-pub struct VariableDeclaration {
+pub struct VariableDeclarationStmt {
     pub token: Token,
     pub initializer: Expr,
 }
 
 // VisitStmt impls
+
+impl<R, V: StmtVisitor<R>> VisitStmt<R, V> for BlockStmt {
+    fn accept(&self, visitor: &mut V) -> R {
+        visitor.visit_block(self)
+    }
+}
+
 impl<R, V: StmtVisitor<R>> VisitStmt<R, V> for Stmt {
     fn accept(&self, visitor: &mut V) -> R {
         visitor.visit_statement(self)
@@ -43,7 +55,7 @@ impl<R, V: StmtVisitor<R>> VisitStmt<R, V> for PrintStmt {
     }
 }
 
-impl<R, V: StmtVisitor<R>> VisitStmt<R, V> for VariableDeclaration {
+impl<R, V: StmtVisitor<R>> VisitStmt<R, V> for VariableDeclarationStmt {
     fn accept(&self, visitor: &mut V) -> R {
         visitor.visit_variable_declaration(self)
     }
