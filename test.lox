@@ -5,7 +5,7 @@ print false or false or true;
 print false or false;
 print false or false or false;
 print false or false or false or false;
-
+if ("" and "foo") print "foo";
 var num = 1;
 while (num <= 5) {
   print num;

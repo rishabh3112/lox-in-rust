@@ -43,7 +43,7 @@ impl Interpreter {
 
     fn is_truthy(&mut self, value: Literal, invert: bool) -> Result<Literal, LoxError> {
         match value {
-            Literal::String(string) => Ok(self.get_boolean_literal(string.len() > 0, invert)),
+            Literal::String(string) => Ok(self.get_boolean_literal(true, invert)),
             Literal::Number(number) => Ok(self.get_boolean_literal(number != 0.0, invert)),
             Literal::Boolean(boolean) => Ok(self.get_boolean_literal(boolean, invert)),
             Literal::Nil => Ok(self.get_boolean_literal(false, invert)),
