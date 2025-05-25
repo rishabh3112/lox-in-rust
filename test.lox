@@ -5,9 +5,13 @@ print false or false or true;
 print false or false;
 print false or false or false;
 print false or false or false or false;
+
 if ("" and "foo") print "foo";
+
 var num = 1;
 while (num <= 5) {
   print num;
   num = num + 1;
 }
+
+for (var i = 0; i < 10; i = i + 1) print i + 1;

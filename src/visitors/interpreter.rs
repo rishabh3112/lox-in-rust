@@ -1,8 +1,8 @@
 use crate::{
     ast::{
         nodes::{
-            Assign, Binary, BlockStmt, Expr, ExpressionStmt, Grouping, IfStmt, Lit, Logical,
-            PrintStmt, Stmt, Unary, Variable, VariableDeclarationStmt, WhileStmt,
+            Assign, Binary, BlockStmt, Expr, ExpressionStmt, ForStmt, Grouping, IfStmt, Lit,
+            Logical, PrintStmt, Stmt, Unary, Variable, VariableDeclarationStmt, WhileStmt,
         },
         traits::{ExprVisitor, StmtVisitor, VisitExpr, VisitStmt},
     },
@@ -60,6 +60,7 @@ impl StmtVisitor<Result<(), LoxError>> for Interpreter {
             Stmt::Block(block_stmt) => self.visit_block(block_stmt),
             Stmt::If(if_stmt) => self.visit_if(if_stmt),
             Stmt::While(while_stmt) => self.visit_while(while_stmt),
+            Stmt::For(for_stmt) => self.visit_for(for_stmt),
         }
     }
 
@@ -116,6 +117,40 @@ impl StmtVisitor<Result<(), LoxError>> for Interpreter {
                 } else {
                     break;
                 }
+            }
+        }
+
+        Ok(())
+    }
+
+    fn visit_for(&mut self, for_stmt: &ForStmt) -> Result<(), LoxError> {
+        if let Some(initializer) = &for_stmt.initializer {
+            initializer.accept(self)?;
+        }
+
+        loop {
+            let condition_value = match &for_stmt.condition {
+                Some(condition_expr) => {
+                    let value = condition_expr.accept(self)?;
+                    match self.is_truthy(value, false) {
+                        Ok(Literal::Boolean(value)) => value,
+                        _ => false,
+                    }
+                }
+                None => true,
+            };
+
+            if !condition_value {
+                break;
+            }
+
+            for_stmt.body.accept(self)?;
+
+            match &for_stmt.increment {
+                Some(expr) => {
+                    expr.accept(self)?;
+                }
+                None => {}
             }
         }
 

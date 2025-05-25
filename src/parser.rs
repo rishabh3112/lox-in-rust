@@ -1,7 +1,7 @@
 use crate::{
     ast::nodes::{
-        Assign, Binary, BlockStmt, Expr, ExpressionStmt, Grouping, IfStmt, Lit, Logical, PrintStmt,
-        Stmt, Unary, Variable, VariableDeclarationStmt, WhileStmt,
+        Assign, Binary, BlockStmt, Expr, ExpressionStmt, ForStmt, Grouping, IfStmt, Lit, Logical,
+        PrintStmt, Stmt, Unary, Variable, VariableDeclarationStmt, WhileStmt,
     },
     error::LoxError,
     token::{
@@ -81,6 +81,10 @@ impl<'a> Parser<'a> {
     }
 
     fn statement(&mut self) -> Result<Stmt, LoxError> {
+        if self.match_token(For) {
+            return self.for_statement();
+        }
+
         if self.match_token(If) {
             return self.if_statement();
         }
@@ -113,6 +117,46 @@ impl<'a> Parser<'a> {
         }
 
         Ok(statements)
+    }
+
+    fn for_statement(&mut self) -> Result<Stmt, LoxError> {
+        if !self.match_token(LeftParen) {
+            return Err(self.error("Expect '(' after 'if'."));
+        }
+
+        let mut initializer: Option<Box<Stmt>> = None;
+        let mut condition: Option<Expr> = None;
+        let mut increment: Option<Expr> = None;
+
+        if self.match_token(SemiColon) {
+        } else if self.match_token(Var) {
+            initializer = Some(Box::new(self.variable_declaration()?));
+        } else {
+            initializer = Some(Box::new(self.expression_statement()?));
+        }
+
+        if !self.match_token(SemiColon) {
+            condition = Some(self.expression()?);
+
+            if !self.match_token(SemiColon) {
+                return Err(self.error("Expect ';' after loop condition."));
+            }
+        }
+
+        if !self.match_token(RightParen) {
+            increment = Some(self.expression()?);
+
+            if !self.match_token(RightParen) {
+                return Err(self.error("Expect ')' after for clauses."));
+            }
+        }
+
+        Ok(Stmt::For(ForStmt {
+            initializer,
+            condition,
+            body: Box::new(self.statement()?),
+            increment,
+        }))
     }
 
     fn if_statement(&mut self) -> Result<Stmt, LoxError> {
