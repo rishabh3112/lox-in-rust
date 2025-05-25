@@ -5,3 +5,9 @@ print false or false or true;
 print false or false;
 print false or false or false;
 print false or false or false or false;
+
+var num = 1;
+while (num <= 5) {
+  print num;
+  num = num + 1;
+}

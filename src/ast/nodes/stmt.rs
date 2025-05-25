@@ -11,6 +11,7 @@ pub enum Stmt {
     Print(PrintStmt),
     Variable(VariableDeclarationStmt),
     If(IfStmt),
+    While(WhileStmt),
 }
 
 pub struct BlockStmt {
@@ -34,6 +35,11 @@ pub struct IfStmt {
     pub condition: Expr,
     pub then_branch: Box<Stmt>,
     pub else_branch: Option<Box<Stmt>>,
+}
+
+pub struct WhileStmt {
+    pub condition: Expr,
+    pub body: Box<Stmt>,
 }
 
 // VisitStmt impls
@@ -71,5 +77,11 @@ impl<R, V: StmtVisitor<R>> VisitStmt<R, V> for VariableDeclarationStmt {
 impl<R, V: StmtVisitor<R>> VisitStmt<R, V> for IfStmt {
     fn accept(&self, visitor: &mut V) -> R {
         visitor.visit_if(self)
+    }
+}
+
+impl<R, V: StmtVisitor<R>> VisitStmt<R, V> for WhileStmt {
+    fn accept(&self, visitor: &mut V) -> R {
+        visitor.visit_while(self)
     }
 }

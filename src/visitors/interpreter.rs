@@ -2,7 +2,7 @@ use crate::{
     ast::{
         nodes::{
             Assign, Binary, BlockStmt, Expr, ExpressionStmt, Grouping, IfStmt, Lit, Logical,
-            PrintStmt, Stmt, Unary, Variable, VariableDeclarationStmt,
+            PrintStmt, Stmt, Unary, Variable, VariableDeclarationStmt, WhileStmt,
         },
         traits::{ExprVisitor, StmtVisitor, VisitExpr, VisitStmt},
     },
@@ -59,6 +59,7 @@ impl StmtVisitor<Result<(), LoxError>> for Interpreter {
             Stmt::Variable(variable_stmt) => self.visit_variable_declaration(variable_stmt),
             Stmt::Block(block_stmt) => self.visit_block(block_stmt),
             Stmt::If(if_stmt) => self.visit_if(if_stmt),
+            Stmt::While(while_stmt) => self.visit_while(while_stmt),
         }
     }
 
@@ -104,6 +105,21 @@ impl StmtVisitor<Result<(), LoxError>> for Interpreter {
         }
 
         panic!("Unrecoverable error");
+    }
+
+    fn visit_while(&mut self, while_stmt: &WhileStmt) -> Result<(), LoxError> {
+        loop {
+            let condition = while_stmt.condition.accept(self)?;
+            if let Literal::Boolean(is_true) = self.is_truthy(condition, false)? {
+                if is_true {
+                    while_stmt.body.accept(self)?;
+                } else {
+                    break;
+                }
+            }
+        }
+
+        Ok(())
     }
 }
 

@@ -1,7 +1,7 @@
 use crate::{
     ast::nodes::{
         Assign, Binary, BlockStmt, Expr, ExpressionStmt, Grouping, IfStmt, Lit, Logical, PrintStmt,
-        Stmt, Unary, Variable, VariableDeclarationStmt,
+        Stmt, Unary, Variable, VariableDeclarationStmt, WhileStmt,
     },
     error::LoxError,
     token::{
@@ -89,6 +89,10 @@ impl<'a> Parser<'a> {
             return self.print_statement();
         }
 
+        if self.match_token(While) {
+            return self.while_statement();
+        }
+
         if self.match_token(LeftBrace) {
             return Ok(Stmt::Block(BlockStmt {
                 statements: self.block()?,
@@ -146,6 +150,23 @@ impl<'a> Parser<'a> {
         }
 
         Ok(Stmt::Print(PrintStmt { expression: result }))
+    }
+
+    fn while_statement(&mut self) -> Result<Stmt, LoxError> {
+        if !self.match_token(LeftParen) {
+            return Err(self.error("Expect '(' after 'if'."));
+        }
+
+        let condition = self.expression()?;
+
+        if !self.match_token(RightParen) {
+            return Err(self.error("Expect ')' after 'if'."));
+        }
+
+        return Ok(Stmt::While(WhileStmt {
+            condition,
+            body: Box::new(self.statement()?),
+        }));
     }
 
     fn expression_statement(&mut self) -> Result<Stmt, LoxError> {
