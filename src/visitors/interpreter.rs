@@ -1,10 +1,10 @@
 use crate::{
     ast::{
         nodes::{
-            Assign, Binary, BlockStmt, Expr, ExpressionStmt, Grouping, Lit, PrintStmt, Stmt, Unary,
-            Variable, VariableDeclarationStmt,
+            Assign, Binary, BlockStmt, Expr, ExpressionStmt, Grouping, IfStmt, Lit, PrintStmt,
+            Stmt, Unary, Variable, VariableDeclarationStmt,
         },
-        traits::{ExprVisitor, StmtVisitor, VisitExpr},
+        traits::{ExprVisitor, StmtVisitor, VisitExpr, VisitStmt},
     },
     environment::Environment,
     error::LoxError,
@@ -58,6 +58,7 @@ impl StmtVisitor<Result<(), LoxError>> for Interpreter {
             Stmt::Expression(expr_stmt) => self.visit_expression(expr_stmt),
             Stmt::Variable(variable_stmt) => self.visit_variable_declaration(variable_stmt),
             Stmt::Block(block_stmt) => self.visit_block(block_stmt),
+            Stmt::If(if_stmt) => self.visit_if(if_stmt),
         }
     }
 
@@ -83,10 +84,26 @@ impl StmtVisitor<Result<(), LoxError>> for Interpreter {
     fn visit_block(&mut self, block_stmt: &BlockStmt) -> Result<(), LoxError> {
         self.environment.start_scope();
         for statement in &block_stmt.statements {
-            self.visit_statement(&statement)?;
+            statement.accept(self)?;
         }
         self.environment.close_scope();
         Ok(())
+    }
+
+    fn visit_if(&mut self, if_stmt: &IfStmt) -> Result<(), LoxError> {
+        let condition = self.visit_expr(&if_stmt.condition)?;
+        if let Literal::Boolean(is_true) = self.is_truthy(condition, false)? {
+            match is_true {
+                true => if_stmt.then_branch.accept(self)?,
+                false => match &if_stmt.else_branch {
+                    Some(statement) => statement.accept(self)?,
+                    None => {}
+                },
+            }
+            return Ok(());
+        }
+
+        panic!("Unrecoverable error");
     }
 }
 

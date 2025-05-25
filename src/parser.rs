@@ -1,7 +1,7 @@
 use crate::{
     ast::nodes::{
-        Assign, Binary, BlockStmt, Expr, ExpressionStmt, Grouping, Lit, PrintStmt, Stmt, Unary,
-        Variable, VariableDeclarationStmt,
+        Assign, Binary, BlockStmt, Expr, ExpressionStmt, Grouping, IfStmt, Lit, PrintStmt, Stmt,
+        Unary, Variable, VariableDeclarationStmt,
     },
     error::LoxError,
     token::{
@@ -81,6 +81,10 @@ impl<'a> Parser<'a> {
     }
 
     fn statement(&mut self) -> Result<Stmt, LoxError> {
+        if self.match_token(If) {
+            return self.if_statement();
+        }
+
         if self.match_token(Print) {
             return self.print_statement();
         }
@@ -105,6 +109,34 @@ impl<'a> Parser<'a> {
         }
 
         Ok(statements)
+    }
+
+    fn if_statement(&mut self) -> Result<Stmt, LoxError> {
+        if !self.match_token(LeftParen) {
+            return Err(self.error("Expect '(' after 'if'."));
+        }
+
+        let condition = self.expression()?;
+
+        if !self.match_token(RightParen) {
+            return Err(self.error("Expect ')' after 'if'."));
+        }
+
+        let then_branch = Box::new(self.statement()?);
+
+        if self.match_token(Else) {
+            return Ok(Stmt::If(IfStmt {
+                condition,
+                then_branch,
+                else_branch: Some(Box::new(self.statement()?)),
+            }));
+        }
+
+        return Ok(Stmt::If(IfStmt {
+            condition,
+            then_branch,
+            else_branch: None,
+        }));
     }
 
     fn print_statement(&mut self) -> Result<Stmt, LoxError> {

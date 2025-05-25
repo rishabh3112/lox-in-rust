@@ -7,14 +7,12 @@ mod token;
 mod tools;
 mod visitors;
 
-use std::collections::HashMap;
 use std::env;
 use std::fs;
 use std::io::{self, Write};
 use std::process::exit;
 
 use ast::traits::ExprVisitor;
-use environment::Environment;
 use parser::Parser;
 use scanner::Scanner;
 use tools::generate_ast;

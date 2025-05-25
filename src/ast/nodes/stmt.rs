@@ -10,6 +10,7 @@ pub enum Stmt {
     Expression(ExpressionStmt),
     Print(PrintStmt),
     Variable(VariableDeclarationStmt),
+    If(IfStmt),
 }
 
 pub struct BlockStmt {
@@ -27,6 +28,12 @@ pub struct PrintStmt {
 pub struct VariableDeclarationStmt {
     pub token: Token,
     pub initializer: Expr,
+}
+
+pub struct IfStmt {
+    pub condition: Expr,
+    pub then_branch: Box<Stmt>,
+    pub else_branch: Option<Box<Stmt>>,
 }
 
 // VisitStmt impls
@@ -58,5 +65,11 @@ impl<R, V: StmtVisitor<R>> VisitStmt<R, V> for PrintStmt {
 impl<R, V: StmtVisitor<R>> VisitStmt<R, V> for VariableDeclarationStmt {
     fn accept(&self, visitor: &mut V) -> R {
         visitor.visit_variable_declaration(self)
+    }
+}
+
+impl<R, V: StmtVisitor<R>> VisitStmt<R, V> for IfStmt {
+    fn accept(&self, visitor: &mut V) -> R {
+        visitor.visit_if(self)
     }
 }
