@@ -1,5 +1,7 @@
-if (true and 2 >= 5) {
-  print nil or "rishabh";
-} else {
-  print "false";
-}
+print 18 or true;
+print false or 18;
+print false or false or true;
+
+print false or false;
+print false or false or false;
+print false or false or false or false;

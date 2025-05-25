@@ -183,12 +183,12 @@ impl<'a> Parser<'a> {
     }
 
     fn or(&mut self) -> Result<Expr, LoxError> {
-        let left = self.and();
+        let mut left = self.and();
 
         while self.match_token(Or) {
             let operator = self.previous().clone();
             let right = self.and()?;
-            return Ok(Expr::Logical(Logical {
+            left = Ok(Expr::Logical(Logical {
                 operator,
                 left: Box::new(left?),
                 right: Box::new(right),
@@ -199,12 +199,12 @@ impl<'a> Parser<'a> {
     }
 
     fn and(&mut self) -> Result<Expr, LoxError> {
-        let left = self.equality();
+        let mut left = self.equality();
 
         while self.match_token(And) {
             let operator = self.previous().clone();
             let right = self.equality()?;
-            return Ok(Expr::Logical(Logical {
+            left = Ok(Expr::Logical(Logical {
                 operator,
                 left: Box::new(left?),
                 right: Box::new(right),
