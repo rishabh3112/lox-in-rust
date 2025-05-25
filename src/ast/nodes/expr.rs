@@ -10,9 +10,16 @@ pub enum Expr {
     Unary(Unary),
     Variable(Variable),
     Assign(Assign),
+    Logical(Logical),
 }
 
 pub struct Binary {
+    pub left: Box<Expr>,
+    pub right: Box<Expr>,
+    pub operator: Token,
+}
+
+pub struct Logical {
     pub left: Box<Expr>,
     pub right: Box<Expr>,
     pub operator: Token,
@@ -50,6 +57,12 @@ impl<R, V: ExprVisitor<R>> VisitExpr<R, V> for Expr {
 impl<R, V: ExprVisitor<R>> VisitExpr<R, V> for Binary {
     fn accept(&self, visitor: &mut V) -> R {
         V::visit_binary_expr(visitor, self)
+    }
+}
+
+impl<R, V: ExprVisitor<R>> VisitExpr<R, V> for Logical {
+    fn accept(&self, visitor: &mut V) -> R {
+        V::visit_logical_expr(visitor, self)
     }
 }
 

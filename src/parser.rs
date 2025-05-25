@@ -1,7 +1,7 @@
 use crate::{
     ast::nodes::{
-        Assign, Binary, BlockStmt, Expr, ExpressionStmt, Grouping, IfStmt, Lit, PrintStmt, Stmt,
-        Unary, Variable, VariableDeclarationStmt,
+        Assign, Binary, BlockStmt, Expr, ExpressionStmt, Grouping, IfStmt, Lit, Logical, PrintStmt,
+        Stmt, Unary, Variable, VariableDeclarationStmt,
     },
     error::LoxError,
     token::{
@@ -162,7 +162,7 @@ impl<'a> Parser<'a> {
     }
 
     fn assignment(&mut self) -> Result<Expr, LoxError> {
-        let left = self.equality();
+        let left = self.or();
 
         if self.match_token(Equal) {
             let value = self.assignment()?;
@@ -177,6 +177,38 @@ impl<'a> Parser<'a> {
             }
 
             return Err(self.error("Invalid assignment target."));
+        }
+
+        left
+    }
+
+    fn or(&mut self) -> Result<Expr, LoxError> {
+        let left = self.and();
+
+        while self.match_token(Or) {
+            let operator = self.previous().clone();
+            let right = self.and()?;
+            return Ok(Expr::Logical(Logical {
+                operator,
+                left: Box::new(left?),
+                right: Box::new(right),
+            }));
+        }
+
+        left
+    }
+
+    fn and(&mut self) -> Result<Expr, LoxError> {
+        let left = self.equality();
+
+        while self.match_token(And) {
+            let operator = self.previous().clone();
+            let right = self.equality()?;
+            return Ok(Expr::Logical(Logical {
+                operator,
+                left: Box::new(left?),
+                right: Box::new(right),
+            }));
         }
 
         left

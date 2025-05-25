@@ -1,8 +1,8 @@
 use crate::{
     ast::{
         nodes::{
-            Assign, Binary, BlockStmt, Expr, ExpressionStmt, Grouping, IfStmt, Lit, PrintStmt,
-            Stmt, Unary, Variable, VariableDeclarationStmt,
+            Assign, Binary, BlockStmt, Expr, ExpressionStmt, Grouping, IfStmt, Lit, Logical,
+            PrintStmt, Stmt, Unary, Variable, VariableDeclarationStmt,
         },
         traits::{ExprVisitor, StmtVisitor, VisitExpr, VisitStmt},
     },
@@ -116,6 +116,7 @@ impl ExprVisitor<Result<Literal, LoxError>> for Interpreter {
             Expr::Unary(unary) => self.visit_unary_expr(unary),
             Expr::Variable(variable) => self.visit_variable_expr(variable),
             Expr::Assign(assign) => self.visit_assign_expr(assign),
+            Expr::Logical(logical) => self.visit_logical_expr(logical),
         }
     }
 
@@ -222,6 +223,24 @@ impl ExprVisitor<Result<Literal, LoxError>> for Interpreter {
 
     fn visit_literal_expr(&mut self, literal_expr: &Lit) -> Result<Literal, LoxError> {
         Ok(literal_expr.literal.clone())
+    }
+
+    fn visit_logical_expr(&mut self, expr: &Logical) -> Result<Literal, LoxError> {
+        let left = expr.left.accept(self)?;
+
+        if let Literal::Boolean(value) = self.is_truthy(left.clone(), false)? {
+            match (expr.operator.ty.clone(), value) {
+                (TokenType::Or, true) => {
+                    return Ok(left);
+                }
+                (TokenType::And, false) => {
+                    return Ok(left);
+                }
+                _ => {}
+            }
+        }
+
+        return expr.right.accept(self);
     }
 
     fn visit_unary_expr(&mut self, unary_expr: &Unary) -> Result<Literal, LoxError> {

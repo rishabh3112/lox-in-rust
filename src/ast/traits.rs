@@ -12,6 +12,7 @@ pub trait ExprVisitor<R> {
     fn visit_unary_expr(&mut self, unary_expr: &Unary) -> R;
     fn visit_variable_expr(&mut self, variable_expr: &Variable) -> R;
     fn visit_assign_expr(&mut self, assign_expr: &Assign) -> R;
+    fn visit_logical_expr(&mut self, logical_expr: &Logical) -> R;
 }
 
 pub trait VisitStmt<R, V: StmtVisitor<R>> {

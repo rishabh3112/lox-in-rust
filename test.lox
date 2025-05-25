@@ -1,5 +1,5 @@
-if (true) {
-  print "true";
+if (true and 2 >= 5) {
+  print nil or "rishabh";
 } else {
   print "false";
 }
