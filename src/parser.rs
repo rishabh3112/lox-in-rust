@@ -1,7 +1,7 @@
 use crate::{
     ast::nodes::{
-        Assign, Binary, BlockStmt, Expr, ExpressionStmt, ForStmt, Grouping, IfStmt, Lit, Logical,
-        PrintStmt, Stmt, Unary, Variable, VariableDeclarationStmt, WhileStmt,
+        Assign, Binary, BlockStmt, Call, Expr, ExpressionStmt, ForStmt, Grouping, IfStmt, Lit,
+        Logical, PrintStmt, Stmt, Unary, Variable, VariableDeclarationStmt, WhileStmt,
     },
     error::LoxError,
     token::{
@@ -343,7 +343,45 @@ impl<'a> Parser<'a> {
             }));
         }
 
-        self.primary()
+        self.call()
+    }
+
+    fn call(&mut self) -> Result<Expr, LoxError> {
+        let mut expr = self.primary()?;
+
+        // Creates nodes for consicutive calls as well.
+        loop {
+            if self.match_token(LeftParen) {
+                let mut arguments = vec![];
+                if !self.check(RightParen) {
+                    if arguments.len() >= 255 {
+                        return Err(self.error("Can't have more than 255 arguments"));
+                    }
+
+                    loop {
+                        arguments.push(self.expression()?);
+                        if !self.match_token(Comma) {
+                            break;
+                        }
+                    }
+                }
+
+                if !self.match_token(RightParen) {
+                    return Err(self.error("Expect ')' after arguments."));
+                }
+
+                expr = Expr::Call(Call {
+                    callee: Box::new(expr),
+                    arguments,
+                    paren: self.previous().clone(),
+                });
+
+                continue;
+            }
+            break;
+        }
+
+        Ok(expr)
     }
 
     fn primary(&mut self) -> Result<Expr, LoxError> {

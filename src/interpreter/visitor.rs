@@ -1,15 +1,16 @@
 use crate::{
     ast::{
         nodes::{
-            Assign, Binary, BlockStmt, Expr, ExpressionStmt, ForStmt, Grouping, IfStmt, Lit,
+            Assign, Binary, BlockStmt, Call, Expr, ExpressionStmt, ForStmt, Grouping, IfStmt, Lit,
             Logical, PrintStmt, Stmt, Unary, Variable, VariableDeclarationStmt, WhileStmt,
         },
         traits::{ExprVisitor, StmtVisitor, VisitExpr, VisitStmt},
     },
-    environment::Environment,
     error::LoxError,
-    token::{Literal, TokenType},
+    token::{Literal, NativeFunction, Token, TokenType},
 };
+
+use super::{callable::LoxCallable, environment::Environment};
 
 pub struct Interpreter {
     environment: Environment,
@@ -17,8 +18,14 @@ pub struct Interpreter {
 
 impl Interpreter {
     pub fn new() -> Self {
+        let mut globals = Environment::new(None);
+        globals.define(
+            Token::new(TokenType::Identifier, None, Some("clock".into()), 0.into()),
+            Literal::NativeFunction(NativeFunction::Clock),
+        );
+        
         Interpreter {
-            environment: Environment::new(None),
+            environment: globals,
         }
     }
 
@@ -43,9 +50,10 @@ impl Interpreter {
 
     fn is_truthy(&mut self, value: Literal, invert: bool) -> Result<Literal, LoxError> {
         match value {
-            Literal::String(string) => Ok(self.get_boolean_literal(true, invert)),
+            Literal::String(_string) => Ok(self.get_boolean_literal(true, invert)),
             Literal::Number(number) => Ok(self.get_boolean_literal(number != 0.0, invert)),
             Literal::Boolean(boolean) => Ok(self.get_boolean_literal(boolean, invert)),
+            Literal::NativeFunction(_) => Ok(Literal::Boolean(false)),
             Literal::Nil => Ok(self.get_boolean_literal(false, invert)),
         }
     }
@@ -168,6 +176,7 @@ impl ExprVisitor<Result<Literal, LoxError>> for Interpreter {
             Expr::Variable(variable) => self.visit_variable_expr(variable),
             Expr::Assign(assign) => self.visit_assign_expr(assign),
             Expr::Logical(logical) => self.visit_logical_expr(logical),
+            Expr::Call(call) => self.visit_call_expr(call),
         }
     }
 
@@ -276,24 +285,6 @@ impl ExprVisitor<Result<Literal, LoxError>> for Interpreter {
         Ok(literal_expr.literal.clone())
     }
 
-    fn visit_logical_expr(&mut self, expr: &Logical) -> Result<Literal, LoxError> {
-        let left = expr.left.accept(self)?;
-
-        if let Literal::Boolean(value) = self.is_truthy(left.clone(), false)? {
-            match (expr.operator.ty.clone(), value) {
-                (TokenType::Or, true) => {
-                    return Ok(left);
-                }
-                (TokenType::And, false) => {
-                    return Ok(left);
-                }
-                _ => {}
-            }
-        }
-
-        return expr.right.accept(self);
-    }
-
     fn visit_unary_expr(&mut self, unary_expr: &Unary) -> Result<Literal, LoxError> {
         let right_result = unary_expr.right.accept(self)?;
 
@@ -320,5 +311,33 @@ impl ExprVisitor<Result<Literal, LoxError>> for Interpreter {
     fn visit_assign_expr(&mut self, assign_expr: &Assign) -> Result<Literal, LoxError> {
         let value = assign_expr.value.accept(self)?;
         self.environment.assign(&assign_expr.token, &value)
+    }
+
+    fn visit_logical_expr(&mut self, expr: &Logical) -> Result<Literal, LoxError> {
+        let left = expr.left.accept(self)?;
+
+        if let Literal::Boolean(value) = self.is_truthy(left.clone(), false)? {
+            match (expr.operator.ty.clone(), value) {
+                (TokenType::Or, true) => {
+                    return Ok(left);
+                }
+                (TokenType::And, false) => {
+                    return Ok(left);
+                }
+                _ => {}
+            }
+        }
+
+        return expr.right.accept(self);
+    }
+
+    fn visit_call_expr(&mut self, call_expr: &Call) -> Result<Literal, LoxError> {
+        let callee = call_expr.callee.accept(self)?;
+        let mut arguments: Vec<Literal> = vec![];
+        for argument in &call_expr.arguments {
+            arguments.push(argument.accept(self)?);
+        }
+
+        callee.call(self, &call_expr.paren, arguments)
     }
 }

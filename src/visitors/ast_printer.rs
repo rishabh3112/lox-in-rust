@@ -24,6 +24,7 @@ impl ExprVisitor<String> for ASTPrinter {
             Expr::Variable(_variable) => todo!(),
             Expr::Assign(_assign) => todo!(),
             Expr::Logical(_logical) => todo!(),
+            Expr::Call(_call) => todo!(),
         }
     }
 
@@ -46,6 +47,7 @@ impl ExprVisitor<String> for ASTPrinter {
             Literal::Number(number) => format!("{:?}", number),
             Literal::Boolean(boolean) => format!("{}", boolean),
             Literal::Nil => format!("nil"),
+            Literal::NativeFunction(_) => format!("function"),
         }
     }
 
@@ -66,6 +68,10 @@ impl ExprVisitor<String> for ASTPrinter {
     }
 
     fn visit_logical_expr(&mut self, _logical_expr: &crate::ast::nodes::Logical) -> String {
+        todo!()
+    }
+
+    fn visit_call_expr(&mut self, _call_expr: &crate::ast::nodes::Call) -> String {
         todo!()
     }
 }

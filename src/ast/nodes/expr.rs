@@ -11,6 +11,7 @@ pub enum Expr {
     Variable(Variable),
     Assign(Assign),
     Logical(Logical),
+    Call(Call),
 }
 
 pub struct Binary {
@@ -45,6 +46,13 @@ pub struct Variable {
 pub struct Assign {
     pub token: Token,
     pub value: Box<Expr>,
+}
+
+pub struct Call {
+    pub callee: Box<Expr>,
+    // closing paren's token, for location reporting in error
+    pub paren: Token,
+    pub arguments: Vec<Expr>,
 }
 
 // VisitExpr impl
@@ -93,5 +101,11 @@ impl<R, V: ExprVisitor<R>> VisitExpr<R, V> for Variable {
 impl<R, V: ExprVisitor<R>> VisitExpr<R, V> for Assign {
     fn accept(&self, visitor: &mut V) -> R {
         V::visit_assign_expr(visitor, self)
+    }
+}
+
+impl<R, V: ExprVisitor<R>> VisitExpr<R, V> for Call {
+    fn accept(&self, visitor: &mut V) -> R {
+        V::visit_call_expr(visitor, self)
     }
 }

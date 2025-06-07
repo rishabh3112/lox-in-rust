@@ -1,6 +1,6 @@
 mod ast;
-mod environment;
 mod error;
+mod interpreter;
 mod parser;
 mod scanner;
 mod token;
@@ -13,11 +13,11 @@ use std::io::{self, Write};
 use std::process::exit;
 
 use ast::traits::ExprVisitor;
+use interpreter::Interpreter;
 use parser::Parser;
 use scanner::Scanner;
 use tools::generate_ast;
 use visitors::ast_printer::ASTPrinter;
-use visitors::interpreter::Interpreter;
 
 fn main() {
     let args: Vec<String> = env::args().collect();

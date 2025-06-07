@@ -155,12 +155,18 @@ impl TokenType {
     }
 }
 
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum NativeFunction {
+    Clock,
+}
+
 #[derive(Debug, PartialEq)]
 pub enum Literal {
+    Nil,
     String(String),
     Number(f64),
     Boolean(bool),
-    Nil,
+    NativeFunction(NativeFunction),
 }
 
 impl Clone for Literal {
@@ -169,6 +175,7 @@ impl Clone for Literal {
             Self::String(string) => Self::String(string.clone()),
             Self::Number(number) => Self::Number(number.clone()),
             Self::Boolean(boolean) => Self::Boolean(boolean.clone()),
+            Self::NativeFunction(function) => Self::NativeFunction(function.clone()),
             Self::Nil => Self::Nil,
         }
     }
@@ -190,6 +197,7 @@ impl Display for Literal {
             Literal::String(string) => write!(f, "{}", string),
             Literal::Number(number) => write!(f, "{}", number),
             Literal::Boolean(boolean) => write!(f, "{}", boolean),
+            Literal::NativeFunction(_function) => write!(f, "native"),
             Literal::Nil => write!(f, "nil"),
         }
     }
