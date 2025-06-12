@@ -3,6 +3,7 @@ use crate::{
     token::{Literal, Token},
 };
 
+#[derive(Debug, PartialEq, Clone)]
 pub enum Expr {
     Binary(Binary),
     Grouping(Grouping),
@@ -14,40 +15,48 @@ pub enum Expr {
     Call(Call),
 }
 
+#[derive(Debug, PartialEq, Clone)]
 pub struct Binary {
     pub left: Box<Expr>,
     pub right: Box<Expr>,
     pub operator: Token,
 }
 
+#[derive(Debug, PartialEq, Clone)]
 pub struct Logical {
     pub left: Box<Expr>,
     pub right: Box<Expr>,
     pub operator: Token,
 }
 
+#[derive(Debug, PartialEq, Clone)]
 pub struct Grouping {
     pub expression: Box<Expr>,
 }
 
+#[derive(Debug, PartialEq, Clone)]
 pub struct Lit {
     pub literal: Literal,
 }
 
+#[derive(Debug, PartialEq, Clone)]
 pub struct Unary {
     pub operator: Token,
     pub right: Box<Expr>,
 }
 
+#[derive(Debug, PartialEq, Clone)]
 pub struct Variable {
     pub token: Token,
 }
 
+#[derive(Debug, PartialEq, Clone)]
 pub struct Assign {
     pub token: Token,
     pub value: Box<Expr>,
 }
 
+#[derive(Debug, PartialEq, Clone)]
 pub struct Call {
     pub callee: Box<Expr>,
     // closing paren's token, for location reporting in error

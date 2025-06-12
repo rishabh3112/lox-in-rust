@@ -1,8 +1,9 @@
 use crate::{
     ast::{
         nodes::{
-            Assign, Binary, BlockStmt, Call, Expr, ExpressionStmt, ForStmt, Grouping, IfStmt, Lit,
-            Logical, PrintStmt, Stmt, Unary, Variable, VariableDeclarationStmt, WhileStmt,
+            Assign, Binary, BlockStmt, Call, Expr, ExpressionStmt, ForStmt, FunctionStmt, Grouping,
+            IfStmt, Lit, Logical, PrintStmt, ReturnStmt, Stmt, Unary, Variable,
+            VariableDeclarationStmt, WhileStmt,
         },
         traits::{ExprVisitor, StmtVisitor, VisitExpr, VisitStmt},
     },
@@ -13,7 +14,7 @@ use crate::{
 use super::{callable::LoxCallable, environment::Environment};
 
 pub struct Interpreter {
-    environment: Environment,
+    pub environment: Environment,
 }
 
 impl Interpreter {
@@ -23,17 +24,17 @@ impl Interpreter {
             Token::new(TokenType::Identifier, None, Some("clock".into()), 0.into()),
             Literal::NativeFunction(NativeFunction::Clock),
         );
-        
+
         Interpreter {
             environment: globals,
         }
     }
 
-    pub fn interpret(&mut self, statements: &Vec<Stmt>) -> Result<(), LoxError> {
+    pub fn interpret(&mut self, statements: &Vec<Stmt>) -> Result<Option<Literal>, LoxError> {
         for statement in statements {
             self.visit_statement(statement)?;
         }
-        Ok(())
+        Ok(None)
     }
 
     fn are_equal(&mut self, x: Literal, y: Literal, invert: bool) -> Result<Literal, LoxError> {
@@ -54,13 +55,14 @@ impl Interpreter {
             Literal::Number(number) => Ok(self.get_boolean_literal(number != 0.0, invert)),
             Literal::Boolean(boolean) => Ok(self.get_boolean_literal(boolean, invert)),
             Literal::NativeFunction(_) => Ok(Literal::Boolean(false)),
+            Literal::Function(_) => Ok(Literal::Boolean(false)),
             Literal::Nil => Ok(self.get_boolean_literal(false, invert)),
         }
     }
 }
 
-impl StmtVisitor<Result<(), LoxError>> for Interpreter {
-    fn visit_statement(&mut self, stmt: &Stmt) -> Result<(), LoxError> {
+impl StmtVisitor<Result<Option<Literal>, LoxError>> for Interpreter {
+    fn visit_statement(&mut self, stmt: &Stmt) -> Result<Option<Literal>, LoxError> {
         match stmt {
             Stmt::Print(print_stmt) => self.visit_print(print_stmt),
             Stmt::Expression(expr_stmt) => self.visit_expression(expr_stmt),
@@ -69,54 +71,64 @@ impl StmtVisitor<Result<(), LoxError>> for Interpreter {
             Stmt::If(if_stmt) => self.visit_if(if_stmt),
             Stmt::While(while_stmt) => self.visit_while(while_stmt),
             Stmt::For(for_stmt) => self.visit_for(for_stmt),
+            Stmt::Function(function_stmt) => self.visit_function(function_stmt),
+            Stmt::Return(return_stmt) => return_stmt.accept(self),
         }
     }
 
-    fn visit_expression(&mut self, expr_stmt: &ExpressionStmt) -> Result<(), LoxError> {
+    fn visit_expression(
+        &mut self,
+        expr_stmt: &ExpressionStmt,
+    ) -> Result<Option<Literal>, LoxError> {
         self.visit_expr(&expr_stmt.expression)?;
-        Ok(())
+        Ok(None)
     }
 
-    fn visit_print(&mut self, print_stmt: &PrintStmt) -> Result<(), LoxError> {
+    fn visit_print(&mut self, print_stmt: &PrintStmt) -> Result<Option<Literal>, LoxError> {
         println!("{}", self.visit_expr(&print_stmt.expression)?);
-        Ok(())
+        Ok(None)
     }
 
     fn visit_variable_declaration(
         &mut self,
         variable_stmt: &VariableDeclarationStmt,
-    ) -> Result<(), LoxError> {
+    ) -> Result<Option<Literal>, LoxError> {
         let result = self.visit_expr(&variable_stmt.initializer)?;
         self.environment.define(variable_stmt.token.clone(), result);
-        Ok(())
+        Ok(None)
     }
 
-    fn visit_block(&mut self, block_stmt: &BlockStmt) -> Result<(), LoxError> {
+    fn visit_block(&mut self, block_stmt: &BlockStmt) -> Result<Option<Literal>, LoxError> {
+        let mut return_value = Some(Literal::Nil);
         self.environment.start_scope();
         for statement in &block_stmt.statements {
-            statement.accept(self)?;
+            return_value = statement.accept(self)?;
         }
         self.environment.close_scope();
-        Ok(())
+        Ok(return_value)
     }
 
-    fn visit_if(&mut self, if_stmt: &IfStmt) -> Result<(), LoxError> {
+    fn visit_if(&mut self, if_stmt: &IfStmt) -> Result<Option<Literal>, LoxError> {
         let condition = self.visit_expr(&if_stmt.condition)?;
         if let Literal::Boolean(is_true) = self.is_truthy(condition, false)? {
             match is_true {
-                true => if_stmt.then_branch.accept(self)?,
+                true => {
+                    if_stmt.then_branch.accept(self)?;
+                }
                 false => match &if_stmt.else_branch {
-                    Some(statement) => statement.accept(self)?,
+                    Some(statement) => {
+                        statement.accept(self)?;
+                    }
                     None => {}
                 },
             }
-            return Ok(());
+            return Ok(None);
         }
 
         panic!("Unrecoverable error");
     }
 
-    fn visit_while(&mut self, while_stmt: &WhileStmt) -> Result<(), LoxError> {
+    fn visit_while(&mut self, while_stmt: &WhileStmt) -> Result<Option<Literal>, LoxError> {
         loop {
             let condition = while_stmt.condition.accept(self)?;
             if let Literal::Boolean(is_true) = self.is_truthy(condition, false)? {
@@ -128,10 +140,10 @@ impl StmtVisitor<Result<(), LoxError>> for Interpreter {
             }
         }
 
-        Ok(())
+        Ok(None)
     }
 
-    fn visit_for(&mut self, for_stmt: &ForStmt) -> Result<(), LoxError> {
+    fn visit_for(&mut self, for_stmt: &ForStmt) -> Result<Option<Literal>, LoxError> {
         if let Some(initializer) = &for_stmt.initializer {
             initializer.accept(self)?;
         }
@@ -162,7 +174,22 @@ impl StmtVisitor<Result<(), LoxError>> for Interpreter {
             }
         }
 
-        Ok(())
+        Ok(None)
+    }
+
+    fn visit_function(
+        &mut self,
+        function_stmt: &FunctionStmt,
+    ) -> Result<Option<Literal>, LoxError> {
+        let function = function_stmt.clone();
+        self.environment
+            .define(*(function_stmt.name).clone(), Literal::Function(function));
+
+        Ok(None)
+    }
+
+    fn visit_return(&mut self, return_stmt: &ReturnStmt) -> Result<Option<Literal>, LoxError> {
+        Ok(Some(return_stmt.value.accept(self)?))
     }
 }
 

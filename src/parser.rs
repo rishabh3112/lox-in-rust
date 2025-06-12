@@ -1,7 +1,8 @@
 use crate::{
     ast::nodes::{
-        Assign, Binary, BlockStmt, Call, Expr, ExpressionStmt, ForStmt, Grouping, IfStmt, Lit,
-        Logical, PrintStmt, Stmt, Unary, Variable, VariableDeclarationStmt, WhileStmt,
+        Assign, Binary, BlockStmt, Call, Expr, ExpressionStmt, ForStmt, FunctionStmt, Grouping,
+        IfStmt, Lit, Logical, PrintStmt, ReturnStmt, Stmt, Unary, Variable,
+        VariableDeclarationStmt, WhileStmt,
     },
     error::LoxError,
     token::{
@@ -41,7 +42,9 @@ impl<'a> Parser<'a> {
     }
 
     fn declaration(&mut self) -> Result<Stmt, LoxError> {
-        let result = if self.match_token(Var) {
+        let result = if self.match_token(Fun) {
+            self.function(String::from("function"))
+        } else if self.match_token(Var) {
             self.variable_declaration()
         } else {
             self.statement()
@@ -54,6 +57,41 @@ impl<'a> Parser<'a> {
                 Err(error)
             }
         }
+    }
+
+    fn function(&mut self, kind: String) -> Result<Stmt, LoxError> {
+        let name = Box::new(
+            self.consume(Identifier, format!("Expect {} name.", kind).as_str())?
+                .clone(),
+        );
+
+        self.consume(LeftParen, format!("Expect ( after {} name.", kind).as_str())?;
+
+        let mut params: Vec<Token> = vec![];
+        if !self.check(RightParen) {
+            loop {
+                if params.len() > 255 {
+                    self.error("Can't have more than 255 characters.");
+                }
+
+                params.push(self.consume(Identifier, "Expect parameter name.")?.clone());
+
+                if !self.match_token(Comma) {
+                    break;
+                }
+            }
+        }
+
+        self.consume(RightParen, "Expect ')' after parameters.")?;
+
+        self.consume(
+            LeftBrace,
+            format!("Expect {{ before {} body.", kind).as_str(),
+        )?;
+
+        let body = self.block()?;
+
+        return Ok(Stmt::Function(FunctionStmt { name, params, body }));
     }
 
     fn variable_declaration(&mut self) -> Result<Stmt, LoxError> {
@@ -91,6 +129,10 @@ impl<'a> Parser<'a> {
 
         if self.match_token(Print) {
             return self.print_statement();
+        }
+
+        if self.match_token(Return) {
+            return self.return_statement();
         }
 
         if self.match_token(While) {
@@ -194,6 +236,21 @@ impl<'a> Parser<'a> {
         }
 
         Ok(Stmt::Print(PrintStmt { expression: result }))
+    }
+
+    fn return_statement(&mut self) -> Result<Stmt, LoxError> {
+        let token = self.previous().clone();
+        let mut value = Expr::Literal(Lit {
+            literal: Literal::Nil,
+        });
+
+        if !self.check(SemiColon) {
+            value = self.expression()?;
+        }
+
+        self.consume(SemiColon, "Expect ';' after return value.")?;
+
+        Ok(Stmt::Return(ReturnStmt { token, value }))
     }
 
     fn while_statement(&mut self) -> Result<Stmt, LoxError> {
@@ -460,6 +517,14 @@ impl<'a> Parser<'a> {
             token: err_token,
             message: message.into(),
         }
+    }
+
+    fn consume(&mut self, ty: TokenType, message: &str) -> Result<&Token, LoxError> {
+        if !self.match_token(ty) {
+            return Err(self.error(message));
+        }
+
+        return Ok(self.previous());
     }
 
     fn synchronize(&mut self) {

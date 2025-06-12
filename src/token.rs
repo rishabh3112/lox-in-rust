@@ -1,6 +1,8 @@
-use std::fmt::{self, Display, Formatter};
+use std::fmt::{self, Debug, Display, Formatter};
 
-#[derive(Clone, Debug)]
+use crate::ast::nodes::FunctionStmt;
+
+#[derive(Debug, PartialEq, Clone)]
 pub struct Token {
     pub ty: TokenType,
     pub lexeme: String,
@@ -166,6 +168,7 @@ pub enum Literal {
     String(String),
     Number(f64),
     Boolean(bool),
+    Function(FunctionStmt),
     NativeFunction(NativeFunction),
 }
 
@@ -175,6 +178,7 @@ impl Clone for Literal {
             Self::String(string) => Self::String(string.clone()),
             Self::Number(number) => Self::Number(number.clone()),
             Self::Boolean(boolean) => Self::Boolean(boolean.clone()),
+            Self::Function(function) => Self::Function(function.clone()),
             Self::NativeFunction(function) => Self::NativeFunction(function.clone()),
             Self::Nil => Self::Nil,
         }
@@ -197,8 +201,11 @@ impl Display for Literal {
             Literal::String(string) => write!(f, "{}", string),
             Literal::Number(number) => write!(f, "{}", number),
             Literal::Boolean(boolean) => write!(f, "{}", boolean),
-            Literal::NativeFunction(_function) => write!(f, "native"),
+            Literal::NativeFunction(_function) => write!(f, "<fn native>"),
             Literal::Nil => write!(f, "nil"),
+            Literal::Function(function_stmt) => {
+                write!(f, "<fn {}>", function_stmt.name.lexeme.clone())
+            }
         }
     }
 }

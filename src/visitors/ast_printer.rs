@@ -48,6 +48,7 @@ impl ExprVisitor<String> for ASTPrinter {
             Literal::Boolean(boolean) => format!("{}", boolean),
             Literal::Nil => format!("nil"),
             Literal::NativeFunction(_) => format!("function"),
+            Literal::Function(_) => todo!(),
         }
     }
 

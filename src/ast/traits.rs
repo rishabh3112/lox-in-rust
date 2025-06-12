@@ -29,4 +29,6 @@ pub trait StmtVisitor<R> {
     fn visit_if(&mut self, if_stmt: &IfStmt) -> R;
     fn visit_while(&mut self, while_stmt: &WhileStmt) -> R;
     fn visit_for(&mut self, for_stmt: &ForStmt) -> R;
+    fn visit_function(&mut self, function_stmt: &FunctionStmt) -> R;
+    fn visit_return(&mut self, return_stmt: &ReturnStmt) -> R;
 }

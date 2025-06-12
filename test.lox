@@ -34,3 +34,23 @@ while (!completed) {
     completed = true;
   }
 }
+
+fun count(n) {
+  if (n == 0) {
+    print 0;
+  } else {
+    print n;
+    count(n - 1);
+  }
+
+}
+
+fun sum(n) {
+  if (n == 9) {
+    return 9;
+  }
+  return n + sum(9);
+}
+
+count(10);
+print sum(10);
