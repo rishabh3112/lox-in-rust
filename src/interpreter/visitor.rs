@@ -99,10 +99,14 @@ impl StmtVisitor<Result<Option<Literal>, LoxError>> for Interpreter {
     }
 
     fn visit_block(&mut self, block_stmt: &BlockStmt) -> Result<Option<Literal>, LoxError> {
-        let mut return_value = Some(Literal::Nil);
+        let mut return_value = None;
         self.environment.start_scope();
         for statement in &block_stmt.statements {
             return_value = statement.accept(self)?;
+            if return_value.is_some() {
+                self.environment.close_scope();
+                return Ok(return_value);
+            }
         }
         self.environment.close_scope();
         Ok(return_value)
@@ -113,12 +117,10 @@ impl StmtVisitor<Result<Option<Literal>, LoxError>> for Interpreter {
         if let Literal::Boolean(is_true) = self.is_truthy(condition, false)? {
             match is_true {
                 true => {
-                    if_stmt.then_branch.accept(self)?;
+                    return if_stmt.then_branch.accept(self);
                 }
                 false => match &if_stmt.else_branch {
-                    Some(statement) => {
-                        statement.accept(self)?;
-                    }
+                    Some(statement) => return statement.accept(self),
                     None => {}
                 },
             }
@@ -133,7 +135,10 @@ impl StmtVisitor<Result<Option<Literal>, LoxError>> for Interpreter {
             let condition = while_stmt.condition.accept(self)?;
             if let Literal::Boolean(is_true) = self.is_truthy(condition, false)? {
                 if is_true {
-                    while_stmt.body.accept(self)?;
+                    let result = while_stmt.body.accept(self)?;
+                    if result.is_some() {
+                        return Ok(result);
+                    }
                 } else {
                     break;
                 }
@@ -164,8 +169,10 @@ impl StmtVisitor<Result<Option<Literal>, LoxError>> for Interpreter {
                 break;
             }
 
-            for_stmt.body.accept(self)?;
-
+            let result = for_stmt.body.accept(self)?;
+            if result.is_some() {
+                return Ok(result);
+            }
             match &for_stmt.increment {
                 Some(expr) => {
                     expr.accept(self)?;

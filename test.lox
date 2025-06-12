@@ -36,13 +36,12 @@ while (!completed) {
 }
 
 fun count(n) {
-  if (n == 0) {
+  if (n <= 0) {
     print 0;
-  } else {
-    print n;
-    count(n - 1);
+    return;
   }
-
+  print n;
+  count(n - 1);
 }
 
 fun sum(n) {
@@ -54,3 +53,12 @@ fun sum(n) {
 
 count(10);
 print sum(10);
+
+fun fib(n) {
+  if (n < 2) return n;
+  return fib(n - 2) + fib(n - 1);
+}
+
+var start = clock();
+print fib(10) == 55;
+print (clock() - start) < 5; // 5 seconds
