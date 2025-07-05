@@ -112,8 +112,8 @@ impl<'a> Scanner<'a> {
                         return ty;
                     }
                 }
-                ' ' | '\t' => self.start += 1,
-                '\n' | '\r' => {
+                ' ' | '\t' | '\r' => self.start += 1,
+                '\n' => {
                     self.line += 1;
                     self.start += 1;
                 }
