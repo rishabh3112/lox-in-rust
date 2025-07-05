@@ -1,6 +1,7 @@
 use crate::{
     ast::traits::{ExprVisitor, VisitExpr},
-    token::{Literal, Token},
+    literal::Literal,
+    token::Token,
 };
 
 #[derive(Debug, PartialEq, Clone)]

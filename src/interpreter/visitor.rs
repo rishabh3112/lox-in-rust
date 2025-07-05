@@ -8,7 +8,8 @@ use crate::{
         traits::{ExprVisitor, StmtVisitor, VisitExpr, VisitStmt},
     },
     error::LoxError,
-    token::{Literal, NativeFunction, Token, TokenType},
+    literal::{FunctionLiteral, Literal, NativeFunction},
+    token::{Token, TokenType},
 };
 
 use super::{callable::LoxCallable, environment::Environment};
@@ -189,8 +190,17 @@ impl StmtVisitor<Result<Option<Literal>, LoxError>> for Interpreter {
         function_stmt: &FunctionStmt,
     ) -> Result<Option<Literal>, LoxError> {
         let function = function_stmt.clone();
-        self.environment
-            .define(*(function_stmt.name).clone(), Literal::Function(function));
+        println!(
+            "{:?}: {:?}\n\n\n",
+            function_stmt.name.lexeme, self.environment
+        );
+        self.environment.define(
+            *(function_stmt.name).clone(),
+            Literal::Function(FunctionLiteral {
+                node: function,
+                closure: self.environment.clone(),
+            }),
+        );
 
         Ok(None)
     }

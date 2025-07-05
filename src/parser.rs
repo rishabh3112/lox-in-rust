@@ -5,8 +5,9 @@ use crate::{
         VariableDeclarationStmt, WhileStmt,
     },
     error::LoxError,
+    literal::Literal,
     token::{
-        Literal, Token,
+        Token,
         TokenType::{self, *},
     },
 };

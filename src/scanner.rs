@@ -1,6 +1,7 @@
 use crate::{
     error::LoxError,
-    token::{Literal, Token, TokenType},
+    literal::Literal,
+    token::{Token, TokenType},
 };
 use std::str::Chars;
 

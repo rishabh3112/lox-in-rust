@@ -1,11 +1,8 @@
 use std::collections::HashMap;
 
-use crate::{
-    error::LoxError,
-    token::{Literal, Token},
-};
+use crate::{error::LoxError, literal::Literal, token::Token};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Environment {
     enclosing: Option<Box<Environment>>,
     values: HashMap<String, Literal>,

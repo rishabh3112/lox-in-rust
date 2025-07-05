@@ -2,13 +2,11 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use super::Interpreter;
 use crate::{
-    ast::{
-        nodes::{BlockStmt, FunctionStmt},
-        traits::StmtVisitor,
-    },
+    ast::{nodes::BlockStmt, traits::StmtVisitor},
     error::LoxError,
     interpreter::environment::Environment,
-    token::{Literal, NativeFunction, Token},
+    literal::{FunctionLiteral, Literal, NativeFunction},
+    token::Token,
 };
 
 pub trait LoxCallable {
@@ -75,22 +73,23 @@ impl LoxCallable for NativeFunction {
     }
 }
 
-impl LoxCallable for FunctionStmt {
+impl LoxCallable for FunctionLiteral {
     fn call(
         &self,
-        interpreter: &Interpreter,
+        _interpreter: &Interpreter,
         _token: &Token,
         arguments: Vec<Literal>,
     ) -> Result<Literal, LoxError> {
-        let mut environment = Environment::new(Some(Box::new(interpreter.environment.clone())));
-        for (i, param) in self.params.iter().enumerate() {
+        let mut environment = Environment::new(Some(Box::new(self.closure.clone())));
+
+        for (i, param) in self.node.params.iter().enumerate() {
             if let Some(value) = arguments.get(i) {
                 environment.define(param.clone(), value.clone());
             }
         }
 
         let block = BlockStmt {
-            statements: self.body.to_owned(),
+            statements: self.node.body.to_owned(),
         };
 
         if let Some(return_value) = (Interpreter { environment }).visit_block(&block)? {
@@ -100,6 +99,6 @@ impl LoxCallable for FunctionStmt {
     }
 
     fn arity(&self) -> usize {
-        self.params.len()
+        self.node.params.len()
     }
 }

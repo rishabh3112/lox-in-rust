@@ -3,7 +3,7 @@ use crate::{
         nodes::{Binary, Expr, Grouping, Lit, Unary},
         traits::{ExprVisitor, VisitExpr},
     },
-    token::Literal,
+    literal::Literal,
 };
 
 pub struct ASTPrinter {}
