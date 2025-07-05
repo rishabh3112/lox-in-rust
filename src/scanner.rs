@@ -113,7 +113,7 @@ impl<'a> Scanner<'a> {
                     }
                 }
                 ' ' | '\t' => self.start += 1,
-                '\n' => {
+                '\n' | '\r' => {
                     self.line += 1;
                     self.start += 1;
                 }
