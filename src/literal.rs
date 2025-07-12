@@ -1,4 +1,8 @@
-use std::fmt::{self, Display, Formatter};
+use std::{
+    cell::RefCell,
+    fmt::{self, Display, Formatter},
+    rc::Rc,
+};
 
 use crate::{ast::nodes::FunctionStmt, interpreter::environment::Environment};
 
@@ -10,7 +14,7 @@ pub enum NativeFunction {
 #[derive(Debug, PartialEq, Clone)]
 pub struct FunctionLiteral {
     pub node: FunctionStmt,
-    pub closure: Environment,
+    pub closure: Rc<RefCell<Environment>>,
 }
 
 #[derive(Debug, PartialEq)]

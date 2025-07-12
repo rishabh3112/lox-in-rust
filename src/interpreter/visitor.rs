@@ -1,3 +1,8 @@
+use std::{
+    cell::{RefCell, RefMut},
+    rc::Rc,
+};
+
 use crate::{
     ast::{
         nodes::{
@@ -15,20 +20,24 @@ use crate::{
 use super::{callable::LoxCallable, environment::Environment};
 
 pub struct Interpreter {
-    pub environment: Environment,
+    pub environment: Rc<RefCell<Environment>>,
 }
 
 impl Interpreter {
     pub fn new() -> Self {
-        let mut globals = Environment::new(None);
+        let mut globals = Environment::new();
         globals.define(
             Token::new(TokenType::Identifier, None, Some("clock".into()), 0.into()),
             Literal::NativeFunction(NativeFunction::Clock),
         );
 
         Interpreter {
-            environment: globals,
+            environment: Rc::new(RefCell::new(globals)),
         }
+    }
+
+    fn get_environment(&mut self) -> RefMut<'_, Environment> {
+        self.environment.borrow_mut()
     }
 
     pub fn interpret(&mut self, statements: &Vec<Stmt>) -> Result<Option<Literal>, LoxError> {
@@ -95,21 +104,22 @@ impl StmtVisitor<Result<Option<Literal>, LoxError>> for Interpreter {
         variable_stmt: &VariableDeclarationStmt,
     ) -> Result<Option<Literal>, LoxError> {
         let result = self.visit_expr(&variable_stmt.initializer)?;
-        self.environment.define(variable_stmt.token.clone(), result);
+        self.get_environment()
+            .define(variable_stmt.token.clone(), result);
         Ok(None)
     }
 
     fn visit_block(&mut self, block_stmt: &BlockStmt) -> Result<Option<Literal>, LoxError> {
         let mut return_value = None;
-        self.environment.start_scope();
+        self.get_environment().start_scope();
         for statement in &block_stmt.statements {
             return_value = statement.accept(self)?;
             if return_value.is_some() {
-                self.environment.close_scope();
+                self.get_environment().close_scope();
                 return Ok(return_value);
             }
         }
-        self.environment.close_scope();
+        self.get_environment().close_scope();
         Ok(return_value)
     }
 
@@ -190,17 +200,13 @@ impl StmtVisitor<Result<Option<Literal>, LoxError>> for Interpreter {
         function_stmt: &FunctionStmt,
     ) -> Result<Option<Literal>, LoxError> {
         let function = function_stmt.clone();
-        println!(
-            "{:?}: {:?}\n\n\n",
-            function_stmt.name.lexeme, self.environment
-        );
-        self.environment.define(
-            *(function_stmt.name).clone(),
-            Literal::Function(FunctionLiteral {
-                node: function,
-                closure: self.environment.clone(),
-            }),
-        );
+        let function_literal = Literal::Function(FunctionLiteral {
+            node: function,
+            closure: Rc::clone(&self.environment),
+        });
+
+        self.get_environment()
+            .define(*(function_stmt.name).clone(), function_literal);
 
         Ok(None)
     }
@@ -349,12 +355,12 @@ impl ExprVisitor<Result<Literal, LoxError>> for Interpreter {
     }
 
     fn visit_variable_expr(&mut self, variable_expr: &Variable) -> Result<Literal, LoxError> {
-        self.environment.get(&variable_expr.token)
+        self.get_environment().get(&variable_expr.token)
     }
 
     fn visit_assign_expr(&mut self, assign_expr: &Assign) -> Result<Literal, LoxError> {
         let value = assign_expr.value.accept(self)?;
-        self.environment.assign(&assign_expr.token, &value)
+        self.get_environment().assign(&assign_expr.token, &value)
     }
 
     fn visit_logical_expr(&mut self, expr: &Logical) -> Result<Literal, LoxError> {

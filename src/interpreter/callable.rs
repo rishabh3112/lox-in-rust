@@ -1,4 +1,8 @@
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::{
+    cell::RefCell,
+    rc::Rc,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 use super::Interpreter;
 use crate::{
@@ -80,7 +84,7 @@ impl LoxCallable for FunctionLiteral {
         _token: &Token,
         arguments: Vec<Literal>,
     ) -> Result<Literal, LoxError> {
-        let mut environment = Environment::new(Some(Box::new(self.closure.clone())));
+        let mut environment = Environment::from(&self.closure);
 
         for (i, param) in self.node.params.iter().enumerate() {
             if let Some(value) = arguments.get(i) {
@@ -92,7 +96,11 @@ impl LoxCallable for FunctionLiteral {
             statements: self.node.body.to_owned(),
         };
 
-        if let Some(return_value) = (Interpreter { environment }).visit_block(&block)? {
+        let mut interpreter = Interpreter {
+            environment: Rc::new(RefCell::new(environment)),
+        };
+
+        if let Some(return_value) = interpreter.visit_block(&block)? {
             return Ok(return_value);
         }
         Ok(Literal::Nil)
