@@ -45,6 +45,7 @@ impl LoxCallable for Literal {
     }
 }
 
+// TODO: make Native Functions exten
 impl LoxCallable for NativeFunction {
     fn call(
         &self,
@@ -96,11 +97,11 @@ impl LoxCallable for FunctionLiteral {
             statements: self.node.body.to_owned(),
         };
 
-        let mut interpreter = Interpreter {
+        let mut child_interpreter = Interpreter {
             environment: Rc::new(RefCell::new(environment)),
         };
 
-        if let Some(return_value) = interpreter.visit_block(&block)? {
+        if let Some(return_value) = child_interpreter.visit_block(&block)? {
             return Ok(return_value);
         }
         Ok(Literal::Nil)
