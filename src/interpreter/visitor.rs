@@ -1,5 +1,6 @@
 use std::{
     cell::{RefCell, RefMut},
+    collections::HashMap,
     rc::Rc,
 };
 
@@ -21,6 +22,7 @@ use super::{callable::LoxCallable, environment::Environment};
 
 pub struct Interpreter {
     pub environment: Rc<RefCell<Environment>>,
+    pub locals: HashMap<Expr, usize>,
 }
 
 impl Interpreter {
@@ -33,6 +35,7 @@ impl Interpreter {
 
         Interpreter {
             environment: Rc::new(RefCell::new(globals)),
+            locals: HashMap::new(),
         }
     }
 
@@ -68,6 +71,10 @@ impl Interpreter {
             Literal::Function(_) => Ok(Literal::Boolean(false)),
             Literal::Nil => Ok(self.get_boolean_literal(false, invert)),
         }
+    }
+
+    pub fn resolve(&mut self, expr: &Expr, index: usize) {
+        self.locals.insert(expr.clone(), index);
     }
 }
 
